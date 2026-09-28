@@ -1,4 +1,8 @@
-"""SQLite persistence layer for StudyFlow subjects."""
+"""SQLite persistence layer for StudyFlow.
+
+The database layer is intentionally independent from the user interface so the
+same backend can later be consumed by a browser-based web application.
+"""
 from pathlib import Path
 import sqlite3
 from typing import Optional, Union
@@ -8,6 +12,7 @@ from models import Subject
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 DATABASE_PATH = DATA_DIR / "studyflow.db"
+SCHEMA_PATH = BASE_DIR / "schema.sql"
 
 DatabasePath = Union[str, Path]
 
@@ -29,29 +34,40 @@ class SubjectInUseError(DatabaseError):
 
 
 def get_connection(database_path: DatabasePath = DATABASE_PATH) -> sqlite3.Connection:
-    """Return a configured SQLite connection and create its parent directory."""
+    """Return a configured SQLite connection.
+
+    A new connection is created per operation, which works well for both the
+    current desktop UI and the future HTTP/web UI.
+    """
     path = Path(database_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(path)
+    connection = sqlite3.connect(path, timeout=5.0)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
     return connection
 
 
 def initialize_database(database_path: DatabasePath = DATABASE_PATH) -> None:
-    """Create the subjects table when it does not already exist."""
+    """Create the complete relational schema and mark its version.
+
+    The operation is idempotent, so it is safe to call when the application
+    starts and when an existing database from milestone 2 is opened.
+    """
+    if not SCHEMA_PATH.exists():
+        raise DatabaseError(f"Database schema file not found: {SCHEMA_PATH}")
+
     with get_connection(database_path) as connection:
-        connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS subjects (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL COLLATE NOCASE UNIQUE,
-                professor TEXT NOT NULL DEFAULT '',
-                target_grade REAL NOT NULL DEFAULT 0 CHECK(target_grade >= 0 AND target_grade <= 100)
-            )
-            """
-        )
+        connection.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+        connection.execute("PRAGMA user_version = 1")
         connection.commit()
+
+
+def get_schema_version(database_path: DatabasePath = DATABASE_PATH) -> int:
+    """Return the SQLite schema version."""
+    initialize_database(database_path)
+    with get_connection(database_path) as connection:
+        row = connection.execute("PRAGMA user_version").fetchone()
+    return int(row[0])
 
 
 def _row_to_subject(row: sqlite3.Row) -> Subject:
@@ -86,9 +102,11 @@ def create_subject(
             subject.id = int(cursor.lastrowid)
             return subject
     except sqlite3.IntegrityError as exc:
-        raise DuplicateSubjectError(
-            f"A subject named '{subject.name}' already exists."
-        ) from exc
+        if "UNIQUE constraint failed" in str(exc):
+            raise DuplicateSubjectError(
+                f"A subject named '{subject.name}' already exists."
+            ) from exc
+        raise DatabaseError("Could not create the subject.") from exc
 
 
 def get_subject(subject_id: int, database_path: DatabasePath = DATABASE_PATH) -> Subject:
@@ -167,26 +185,23 @@ def update_subject(
                 )
             connection.commit()
     except sqlite3.IntegrityError as exc:
-        raise DuplicateSubjectError(
-            f"A subject named '{subject.name}' already exists."
-        ) from exc
+        if "UNIQUE constraint failed" in str(exc):
+            raise DuplicateSubjectError(
+                f"A subject named '{subject.name}' already exists."
+            ) from exc
+        raise DatabaseError("Could not update the subject.") from exc
     return subject
 
 
 def _subject_has_dependencies(connection: sqlite3.Connection, subject_id: int) -> bool:
-    """Protect deletion if a later milestone has already created dependent tables."""
+    """Protect deletion if dependent task or exam rows already exist."""
     for table in ("tasks", "exams"):
-        exists = connection.execute(
-            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
-            (table,),
+        dependency = connection.execute(
+            f"SELECT 1 FROM {table} WHERE subject_id = ? LIMIT 1",
+            (subject_id,),
         ).fetchone()
-        if exists is not None:
-            dependency = connection.execute(
-                f"SELECT 1 FROM {table} WHERE subject_id = ? LIMIT 1",
-                (subject_id,),
-            ).fetchone()
-            if dependency is not None:
-                return True
+        if dependency is not None:
+            return True
     return False
 
 
@@ -209,5 +224,10 @@ def delete_subject(
             raise SubjectInUseError(
                 f"Subject with id {subject_id} cannot be deleted because it has associated data."
             )
-        connection.execute("DELETE FROM subjects WHERE id = ?", (subject_id,))
-        connection.commit()
+        try:
+            connection.execute("DELETE FROM subjects WHERE id = ?", (subject_id,))
+            connection.commit()
+        except sqlite3.IntegrityError as exc:
+            raise SubjectInUseError(
+                f"Subject with id {subject_id} cannot be deleted because it has associated data."
+            ) from exc
