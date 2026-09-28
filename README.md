@@ -4,7 +4,21 @@ Aplicación de escritorio en Python para gestionar el estudio y analizar el rend
 
 ## Estado actual
 
-**Punto 1 — Estructura general:** completado.
+**Punto 1 — Estructura general:** completado.  
+**Punto 2 — Sistema de materias:** completado.
+
+## Funcionalidades implementadas
+
+### Sistema de materias
+- Crear materias.
+- Consultar una materia por ID.
+- Listar y buscar materias.
+- Editar materias.
+- Eliminar materias.
+- Validar nombre, profesor y meta de nota.
+- Evitar nombres duplicados sin importar mayúsculas/minúsculas.
+- Impedir la eliminación cuando ya existen tareas o exámenes asociados.
+- Persistir los datos en SQLite.
 
 ## Estructura
 
@@ -18,6 +32,8 @@ StudyFlow/
 ├── calculations.py
 ├── interface.py
 ├── charts.py
+├── tests/
+│   └── test_subjects.py
 ├── README.md
 └── data/
 ```
@@ -29,3 +45,11 @@ StudyFlow/
 - SQLite
 - Matplotlib (fase posterior)
 - API de IA opcional (fase posterior)
+
+## Pruebas
+
+Las pruebas del sistema de materias se ejecutan con:
+
+```bash
+python -m unittest discover -s tests -v
+```
