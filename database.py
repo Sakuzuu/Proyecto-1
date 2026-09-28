@@ -3,11 +3,12 @@
 The database layer is intentionally independent from the user interface so the
 same backend can later be consumed by a browser-based web application.
 """
+from datetime import date
 from pathlib import Path
 import sqlite3
 from typing import Optional, Union
 
-from models import Subject
+from models import Subject, Task
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
@@ -33,6 +34,10 @@ class SubjectInUseError(DatabaseError):
     """Raised when a subject cannot be deleted because it has dependent data."""
 
 
+class TaskNotFoundError(DatabaseError):
+    """Raised when a requested task does not exist."""
+
+
 def get_connection(database_path: DatabasePath = DATABASE_PATH) -> sqlite3.Connection:
     """Return a configured SQLite connection.
 
@@ -48,11 +53,7 @@ def get_connection(database_path: DatabasePath = DATABASE_PATH) -> sqlite3.Conne
 
 
 def initialize_database(database_path: DatabasePath = DATABASE_PATH) -> None:
-    """Create the complete relational schema and mark its version.
-
-    The operation is idempotent, so it is safe to call when the application
-    starts and when an existing database from milestone 2 is opened.
-    """
+    """Create the complete relational schema and mark its version."""
     if not SCHEMA_PATH.exists():
         raise DatabaseError(f"Database schema file not found: {SCHEMA_PATH}")
 
@@ -76,6 +77,20 @@ def _row_to_subject(row: sqlite3.Row) -> Subject:
         name=row["name"],
         professor=row["professor"],
         target_grade=float(row["target_grade"]),
+    )
+
+
+def _row_to_task(row: sqlite3.Row) -> Task:
+    return Task(
+        id=int(row["id"]),
+        subject_id=int(row["subject_id"]),
+        name=row["name"],
+        description=row["description"],
+        deadline=date.fromisoformat(row["deadline"]),
+        difficulty=int(row["difficulty"]),
+        estimated_minutes=int(row["estimated_minutes"]),
+        progress=int(row["progress"]),
+        status=row["status"],
     )
 
 
@@ -231,3 +246,188 @@ def delete_subject(
             raise SubjectInUseError(
                 f"Subject with id {subject_id} cannot be deleted because it has associated data."
             ) from exc
+
+
+def create_task(
+    subject_id: int,
+    name: str,
+    description: str,
+    deadline: date,
+    difficulty: int,
+    estimated_minutes: int,
+    progress: int = 0,
+    status: str = "pending",
+    database_path: DatabasePath = DATABASE_PATH,
+) -> Task:
+    """Create and return a task associated with an existing subject."""
+    task = Task(
+        id=None,
+        subject_id=subject_id,
+        name=name,
+        description=description,
+        deadline=deadline,
+        difficulty=difficulty,
+        estimated_minutes=estimated_minutes,
+        progress=progress,
+        status=status,
+    )
+    _ensure_initialized(database_path)
+    try:
+        with get_connection(database_path) as connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO tasks (
+                    subject_id, name, description, deadline, difficulty,
+                    estimated_minutes, progress, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    task.subject_id,
+                    task.name,
+                    task.description,
+                    task.deadline.isoformat(),
+                    task.difficulty,
+                    task.estimated_minutes,
+                    task.progress,
+                    task.status,
+                ),
+            )
+            connection.commit()
+            task.id = int(cursor.lastrowid)
+            return task
+    except sqlite3.IntegrityError as exc:
+        if "FOREIGN KEY constraint failed" in str(exc):
+            raise SubjectNotFoundError(
+                f"Subject with id {task.subject_id} was not found."
+            ) from exc
+        raise DatabaseError("Could not create the task.") from exc
+
+
+def get_task(task_id: int, database_path: DatabasePath = DATABASE_PATH) -> Task:
+    """Return one task by ID."""
+    if isinstance(task_id, bool) or not isinstance(task_id, int) or task_id <= 0:
+        raise ValueError("task_id must be a positive integer.")
+    _ensure_initialized(database_path)
+    with get_connection(database_path) as connection:
+        row = connection.execute(
+            """
+            SELECT id, subject_id, name, description, deadline, difficulty,
+                   estimated_minutes, progress, status
+            FROM tasks
+            WHERE id = ?
+            """,
+            (task_id,),
+        ).fetchone()
+    if row is None:
+        raise TaskNotFoundError(f"Task with id {task_id} was not found.")
+    return _row_to_task(row)
+
+
+def list_tasks(
+    subject_id: Optional[int] = None,
+    status: Optional[str] = None,
+    database_path: DatabasePath = DATABASE_PATH,
+) -> list[Task]:
+    """Return tasks, optionally filtered by subject and/or status."""
+    if subject_id is not None and (
+        isinstance(subject_id, bool) or not isinstance(subject_id, int) or subject_id <= 0
+    ):
+        raise ValueError("subject_id must be a positive integer or None.")
+    if status is not None and status not in {"pending", "in_progress", "completed"}:
+        raise ValueError("status must be one of: pending, in_progress, completed.")
+
+    _ensure_initialized(database_path)
+    clauses = []
+    parameters: list[object] = []
+    if subject_id is not None:
+        clauses.append("subject_id = ?")
+        parameters.append(subject_id)
+    if status is not None:
+        clauses.append("status = ?")
+        parameters.append(status)
+
+    query = """
+        SELECT id, subject_id, name, description, deadline, difficulty,
+               estimated_minutes, progress, status
+        FROM tasks
+    """
+    if clauses:
+        query += " WHERE " + " AND ".join(clauses)
+    query += " ORDER BY deadline ASC, id ASC"
+
+    with get_connection(database_path) as connection:
+        rows = connection.execute(query, parameters).fetchall()
+    return [_row_to_task(row) for row in rows]
+
+
+def update_task(
+    task_id: int,
+    subject_id: int,
+    name: str,
+    description: str,
+    deadline: date,
+    difficulty: int,
+    estimated_minutes: int,
+    progress: int = 0,
+    status: str = "pending",
+    database_path: DatabasePath = DATABASE_PATH,
+) -> Task:
+    """Update and return a task, validating all new values."""
+    if isinstance(task_id, bool) or not isinstance(task_id, int) or task_id <= 0:
+        raise ValueError("task_id must be a positive integer.")
+    task = Task(
+        id=task_id,
+        subject_id=subject_id,
+        name=name,
+        description=description,
+        deadline=deadline,
+        difficulty=difficulty,
+        estimated_minutes=estimated_minutes,
+        progress=progress,
+        status=status,
+    )
+    _ensure_initialized(database_path)
+    try:
+        with get_connection(database_path) as connection:
+            cursor = connection.execute(
+                """
+                UPDATE tasks
+                SET subject_id = ?, name = ?, description = ?, deadline = ?,
+                    difficulty = ?, estimated_minutes = ?, progress = ?, status = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                (
+                    task.subject_id,
+                    task.name,
+                    task.description,
+                    task.deadline.isoformat(),
+                    task.difficulty,
+                    task.estimated_minutes,
+                    task.progress,
+                    task.status,
+                    task_id,
+                ),
+            )
+            if cursor.rowcount == 0:
+                raise TaskNotFoundError(f"Task with id {task_id} was not found.")
+            connection.commit()
+    except sqlite3.IntegrityError as exc:
+        if "FOREIGN KEY constraint failed" in str(exc):
+            raise SubjectNotFoundError(
+                f"Subject with id {task.subject_id} was not found."
+            ) from exc
+        raise DatabaseError("Could not update the task.") from exc
+    return task
+
+
+def delete_task(task_id: int, database_path: DatabasePath = DATABASE_PATH) -> None:
+    """Delete a task by ID."""
+    if isinstance(task_id, bool) or not isinstance(task_id, int) or task_id <= 0:
+        raise ValueError("task_id must be a positive integer.")
+    _ensure_initialized(database_path)
+    with get_connection(database_path) as connection:
+        cursor = connection.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+        if cursor.rowcount == 0:
+            raise TaskNotFoundError(f"Task with id {task_id} was not found.")
+        connection.commit()

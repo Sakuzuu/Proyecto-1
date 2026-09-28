@@ -6,59 +6,63 @@ Aplicación de Python para gestionar el estudio y analizar el rendimiento acadé
 
 **Punto 1 — Estructura general:** completado.  
 **Punto 2 — Sistema de materias:** completado.  
-**Punto 3 — Base de datos:** completado.
+**Punto 3 — Base de datos:** completado.  
+**Punto 4 — Sistema de tareas y actividades:** completado.
 
-## Arquitectura de datos
+## Sistema de tareas
 
-StudyFlow utiliza **SQLite** como capa de persistencia. El esquema completo está separado en `schema.sql` para que la lógica de acceso a datos no dependa de la interfaz gráfica.
+Las tareas están relacionadas con una materia mediante `subject_id`.
 
-Tablas principales:
-
-- `subjects`: materias.
-- `tasks`: tareas y actividades.
-- `exams`: exámenes programados.
-- `evaluations`: resultados de evaluaciones.
-
-Relaciones:
+Cada tarea almacena:
 
 ```text
-subjects
-   ├── tasks
-   └── exams
-          └── evaluations
+id
+subject_id
+name
+description
+deadline
+difficulty
+estimated_minutes
+progress
+status
 ```
 
-Las claves foráneas, restricciones de rango e índices se aplican directamente en SQLite. La inicialización es idempotente y mantiene la versión del esquema mediante `PRAGMA user_version`.
+Estados válidos:
 
-## Sistema de materias
+- `pending`
+- `in_progress`
+- `completed`
 
-- Crear materias.
-- Consultar una materia por ID.
-- Listar y buscar materias.
-- Editar materias.
-- Eliminar materias.
-- Validar nombre, profesor y meta de nota.
-- Evitar nombres duplicados sin importar mayúsculas/minúsculas.
-- Impedir la eliminación cuando ya existen tareas o exámenes asociados.
-- Persistir los datos en SQLite.
+El modelo valida los campos antes de enviarlos a SQLite y la base de datos mantiene las restricciones como segunda línea de defensa.
 
-## Preparación para interfaz web
+El backend permite:
 
-La capa de base de datos crea una conexión independiente por operación y no importa componentes de Tkinter. Esto permite que el mismo backend sea utilizado posteriormente por:
+- Crear tareas.
+- Consultar tareas por ID.
+- Listar tareas.
+- Filtrar por materia.
+- Filtrar por estado.
+- Editar tareas.
+- Eliminar tareas.
+- Rechazar tareas asociadas a materias inexistentes.
+
+## Arquitectura preparada para web
+
+La lógica de tareas y la persistencia siguen sin depender de Tkinter. Esto permite que más adelante una capa HTTP/REST exponga estas operaciones a una interfaz web.
+
+La idea será:
 
 ```text
-                  ┌── Interfaz web (navegador)
-                  │
-Usuario → HTTP → Capa de aplicación
-                  │
-                  ├── Analizador
-                  ├── Planificador
-                  └── Base de datos SQLite
-                  │
-                  └── interfaz de escritorio temporal
+Navegador
+   ↓ HTTP
+Capa web / API
+   ↓
+Lógica StudyFlow
+   ↓
+SQLite
 ```
 
-La interfaz gráfica definitiva podrá ser web, de modo que el usuario acceda a StudyFlow desde un navegador sin duplicar la lógica de datos.
+La aplicación de escritorio actual queda como interfaz temporal; no será necesario duplicar la lógica de negocio para la versión web.
 
 ## Estructura
 
@@ -75,7 +79,8 @@ StudyFlow/
 ├── schema.sql
 ├── tests/
 │   ├── test_subjects.py
-│   └── test_database_schema.py
+│   ├── test_database_schema.py
+│   └── test_tasks.py
 ├── README.md
 └── data/
 ```
@@ -91,7 +96,13 @@ StudyFlow/
 
 ## Pruebas
 
-Ejecutar toda la suite con:
+Pruebas del sistema de tareas:
+
+```bash
+python -m unittest discover -s tests -p "test_tasks.py" -v
+```
+
+Suite general:
 
 ```bash
 python -m unittest discover -s tests -v
