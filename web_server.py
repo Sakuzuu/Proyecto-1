@@ -125,7 +125,7 @@ code{background:#f2f4f7;padding:2px 5px;border-radius:5px}
 .trend-up{background:#ecfdf3;color:#067647}
 .trend-down{background:#fef3f2;color:#b42318}
 .trend-flat{background:#f2f4f7;color:#344054}
-@media(max-width:800px){.insight-grid,.threshold-form{grid-template-columns:1fr}}
+@media(max-width:800px){{.insight-grid,.threshold-form{{grid-template-columns:1fr}}}}
 </style>
 """
     return web_app._page(body, "Análisis académico · StudyFlow")
