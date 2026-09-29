@@ -36,7 +36,7 @@ class RecordsAndSubjectsWebTests(unittest.TestCase):
                 "CONTENT_TYPE": "application/x-www-form-urlencoded",
             }
         )
-        status, headers = [], {}
+        status, headers = [], []
 
         def start_response(code, response_headers):
             status.append(code)
