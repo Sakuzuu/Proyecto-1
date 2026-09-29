@@ -115,16 +115,16 @@ def _analysis_dashboard(environ):
 <form method='get' action='/charts'><button type='submit'>Ver gráficos</button></form>
 </div>
 <style>
-.insight-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.insight-group{border:1px solid #e4e7ec;border-radius:12px;padding:14px}
-.insight-item{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #eaecf0}
-.insight-item:last-child{border-bottom:0}
-.threshold-form{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}
-.threshold-form button{height:42px}
-code{background:#f2f4f7;padding:2px 5px;border-radius:5px}
-.trend-up{background:#ecfdf3;color:#067647}
-.trend-down{background:#fef3f2;color:#b42318}
-.trend-flat{background:#f2f4f7;color:#344054}
+.insight-grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}}
+.insight-group{{border:1px solid #e4e7ec;border-radius:12px;padding:14px}}
+.insight-item{{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #eaecf0}}
+.insight-item:last-child{{border-bottom:0}}
+.threshold-form{{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}}
+.threshold-form button{{height:42px}}
+code{{background:#f2f4f7;padding:2px 5px;border-radius:5px}}
+.trend-up{{background:#ecfdf3;color:#067647}}
+.trend-down{{background:#fef3f2;color:#b42318}}
+.trend-flat{{background:#f2f4f7;color:#344054}}
 @media(max-width:800px){{.insight-grid,.threshold-form{{grid-template-columns:1fr}}}}
 </style>
 """
