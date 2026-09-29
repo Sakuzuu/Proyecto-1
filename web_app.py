@@ -113,35 +113,87 @@ def _plan_html(plan):
     return ''.join(html)
 
 
+def _performance_summary_html(performance):
+    best = performance["best_subject"]
+    lowest = performance["lowest_subject"]
+    best_html = (
+        f"<strong>{escape(best['subject_name'])}</strong><br><span class='muted'>{best['average']:g}/100</span>"
+        if best else "<span class='muted'>Sin evaluaciones</span>"
+    )
+    lowest_html = (
+        f"<strong>{escape(lowest['subject_name'])}</strong><br><span class='muted'>{lowest['average']:g}/100</span>"
+        if lowest else "<span class='muted'>Sin evaluaciones</span>"
+    )
+    rows = "".join(
+        f"<tr><td>{escape(row['subject_name'])}</td><td><strong>{row['average']:g}</strong></td>"
+        f"<td>{row['target_grade']:g}</td><td>{row['evaluation_count']}</td>"
+        f"<td><span class='badge {'green' if row['trend_status']=='up' else 'red' if row['trend_status']=='down' else ''}'>{escape(row['trend'])}</span></td></tr>"
+        for row in performance["subjects"]
+    )
+    table = (
+        "<table><tr><th>Materia</th><th>Promedio</th><th>Meta</th><th>Evaluaciones</th><th>Tendencia</th></tr>"
+        + rows + "</table>"
+        if rows else '<p class="muted">Todavía no existen evaluaciones suficientes para comparar materias.</p>'
+    )
+    trend_class = "green" if performance["overall_trend_status"] == "up" else "red" if performance["overall_trend_status"] == "down" else ""
+    return f"""
+<section class="card wide">
+<h2>📊 Dashboard de rendimiento</h2>
+<div class="metric-grid">
+<div class="metric-box"><div class="muted">Promedio general</div><div class="metric">{performance['general_average']:g}</div></div>
+<div class="metric-box"><div class="muted">Mejor materia</div><div class="metric-small">{best_html}</div></div>
+<div class="metric-box"><div class="muted">Menor promedio</div><div class="metric-small">{lowest_html}</div></div>
+<div class="metric-box"><div class="muted">Tendencia general</div><div class="metric-small"><span class="badge {trend_class}">{escape(performance['overall_trend'])}</span></div></div>
+</div>
+<h3>Promedios por materia</h3><div class="table-wrap">{table}</div>
+<form method="get" action="/analysis"><button type="submit">Abrir análisis detallado</button></form>
+</section>
+"""
+
+
 def _dashboard(message="", error="", plan=None):
     subjects = database.list_subjects(database_path=database.DATABASE_PATH)
     tasks = database.list_tasks(database_path=database.DATABASE_PATH)
     exams = database.list_exams(database_path=database.DATABASE_PATH)
     evaluations = database.list_evaluations(database_path=database.DATABASE_PATH)
     report = analyzer.build_average_report(subjects, exams, evaluations)
-    names = _names(subjects); today = date.today().isoformat()
+    performance = analyzer.build_performance_report(subjects, exams, evaluations)
+    names = _names(subjects)
+    today = date.today().isoformat()
     notice = (f'<div class="notice">{escape(message)}</div>' if message else '') + (f'<div class="error">{escape(error)}</div>' if error else '')
     overdue = sum(1 for x in planner.rank_study_items(tasks, exams, date.today()) if x['overdue'])
-    if overdue: notice += f'<div class="warning">Hay {overdue} elemento(s) vencido(s). No se programan en el plan.</div>'
+    if overdue:
+        notice += f'<div class="warning">Hay {overdue} elemento(s) vencido(s). No se programan en el plan.</div>'
     subs = ''.join(f'<option value="{s.id}">{escape(s.name)}</option>' for s in subjects)
     exs = ''.join(f'<option value="{e.id}">{escape(names.get(e.subject_id,"Materia"))} — {escape(e.name)}</option>' for e in exams)
-    dis = ' disabled' if not subjects else ''; edis = ' disabled' if not exams else ''
+    dis = ' disabled' if not subjects else ''
+    edis = ' disabled' if not exams else ''
     start = planner._round_up_to_five_minutes(datetime.now()).strftime('%H:%M')
-    body = f'''<header><h1>StudyFlow</h1><div class="muted">Planificación y análisis académico · <span class="badge">Punto 8</span></div></header>{notice}<div class="grid">
-<section class="card"><h2>📅 Generador de plan de estudio</h2><p class="muted">Introduce tus horas disponibles y StudyFlow distribuye el tiempo entre tareas y exámenes según prioridad, tiempo y fecha límite.</p><form method="post" action="/plan"><label>Horas disponibles hoy</label><input name="hours" type="number" min="0.25" max="16" step="0.25" value="3" required><label>Hora de inicio</label><input name="start_time" type="time" value="{start}" required><button>Generar plan de hoy</button></form><p class="muted">Máximo 80 min por sesión y 15 min de descanso.</p></section>
-<section class="card"><h2>📊 Promedio actual</h2><div class="metric">{report['general_average']:g}/100</div><p class="muted">Promedio general actual</p><p><span class="badge">{len(tasks)} tareas</span> <span class="badge">{len(exams)} exámenes</span></p></section>
+    body = f'''<header><h1>StudyFlow</h1><div class="muted">Planificación y análisis académico · <span class="badge">Puntos 8–9</span></div></header>{notice}<div class="grid">
+<section class="card"><h2>📅 Generador de plan de estudio</h2><p class="muted">Introduce tus horas disponibles y StudyFlow distribuye el tiempo entre tareas y exámenes según prioridad, tiempo y fecha límite.</p><form method="post" action="/plan"><label>Horas disponibles hoy</label><input name="hours" type="number" min="0.25" max="16" step="0.25" value="3" required><label>Hora de inicio</label><input name="start_time" type="time" value="{start}" required><button type="submit">Generar plan de hoy</button></form><p class="muted">Máximo 80 min por sesión y 15 min de descanso.</p></section>
+<section class="card"><h2>📊 Resumen</h2><div class="metric">{report['general_average']:g}/100</div><p class="muted">Promedio actual</p><p><span class="badge">{len(tasks)} tareas</span> <span class="badge">{len(exams)} exámenes</span> <span class="badge">{len(evaluations)} evaluaciones</span></p></section>
+{_performance_summary_html(performance)}
 <section class="card wide"><h2>🎯 Prioridades de estudio</h2>{_priority_html(tasks, exams, subjects)}</section>
-<section class="card wide"><h2>➕ Agregar datos</h2><div class="grid"><form method="post" action="/tasks"><h3>Nueva tarea</h3><label>Materia</label><select name="subject_id" required{dis}>{subs}</select><label>Nombre</label><input name="name" required><label>Descripción</label><textarea name="description"></textarea><label>Fecha límite</label><input name="deadline" type="date" min="{today}" required><label>Dificultad (1–10)</label><input name="difficulty" type="number" min="1" max="10" value="5" required><label>Tiempo estimado (min)</label><input name="estimated_minutes" type="number" min="1" value="60" required><label>Progreso</label><input name="progress" type="number" min="0" max="100" value="0" required><label>Estado</label><select name="status"><option value="pending">Pendiente</option><option value="in_progress">En progreso</option><option value="completed">Completada</option></select><button{dis}>Guardar tarea</button></form><form method="post" action="/exams"><h3>Nuevo examen</h3><label>Materia</label><select name="subject_id" required{dis}>{subs}</select><label>Nombre</label><input name="name" required><label>Fecha del examen</label><input name="exam_date" type="date" min="{today}" required><label>Dificultad (1–10)</label><input name="difficulty" type="number" min="1" max="10" value="7" required><label>Peso (%)</label><input name="weight" type="number" min="0" max="100" step="0.1" value="20" required><button{dis}>Guardar examen</button></form></div></section>
-<section class="card"><h2>📝 Registrar nota</h2><form method="post" action="/evaluations"><label>Examen</label><select name="exam_id" required{edis}>{exs}</select><label>Nota (0–100)</label><input name="grade" type="number" min="0" max="100" step="0.01" required{edis}><label>Fecha</label><input name="date" type="date" value="{today}" required{edis}><label>Tipo de evaluación</label><input name="type" required{edis}><button{edis}>Guardar nota</button></form></section>
-<section class="card"><h2>📈 Resumen</h2><p><strong>{report['evaluated_exams']}</strong> exámenes con nota.</p><p><strong>{report['total_evaluations']}</strong> evaluaciones almacenadas.</p></section>
-<section class="card wide"><h2>Promedios por materia</h2><table><tr><th>Materia</th><th>Promedio</th><th>Meta</th><th>Notas</th></tr>{''.join(f"<tr><td>{escape(r['subject_name'])}</td><td><strong>{r['average']:g}</strong></td><td>{r['target_grade']:g}</td><td>{r['evaluation_count']}</td></tr>" for r in report['subjects'])}</table></section>
-<section class="card wide"><h2>Tareas registradas</h2>{'<p class="muted">No hay tareas registradas.</p>' if not tasks else ''.join(f"<p><strong>{escape(names.get(t.subject_id,'Materia'))}</strong> · {escape(t.name)} · {t.deadline} · {t.progress}% {'✅' if t.status=='completed' else ''}</p>" for t in tasks)}</section>
+<section class="card wide"><h2>➕ Agregar datos</h2><div class="grid"><form method="post" action="/tasks"><h3>Nueva tarea</h3><label>Materia</label><select name="subject_id" required{dis}>{subs}</select><label>Nombre</label><input name="name" required><label>Descripción</label><textarea name="description"></textarea><label>Fecha límite</label><input name="deadline" type="date" min="{today}" required><label>Dificultad (1–10)</label><input name="difficulty" type="number" min="1" max="10" value="5" required><label>Tiempo estimado (min)</label><input name="estimated_minutes" type="number" min="1" value="60" required><label>Progreso</label><input name="progress" type="number" min="0" max="100" value="0" required><label>Estado</label><select name="status"><option value="pending">Pendiente</option><option value="in_progress">En progreso</option><option value="completed">Completada</option></select><button type="submit"{dis}>Guardar tarea</button></form><form method="post" action="/exams"><h3>Nuevo examen</h3><label>Materia</label><select name="subject_id" required{dis}>{subs}</select><label>Nombre</label><input name="name" required><label>Fecha del examen</label><input name="exam_date" type="date" min="{today}" required><label>Dificultad (1–10)</label><input name="difficulty" type="number" min="1" max="10" value="7" required><label>Peso (%)</label><input name="weight" type="number" min="0" max="100" step="0.1" value="20" required><button type="submit"{dis}>Guardar examen</button></form></div></section>
+<section class="card"><h2>📝 Registrar nota</h2><form method="post" action="/evaluations"><label>Examen</label><select name="exam_id" required{edis}>{exs}</select><label>Nota (0–100)</label><input name="grade" type="number" min="0" max="100" step="0.01" required{edis}><label>Fecha</label><input name="date" type="date" value="{today}" required{edis}><label>Tipo de evaluación</label><input name="type" required{edis}><button type="submit"{edis}>Guardar nota</button></form></section>
+<section class="card wide"><h2>✅ Tareas registradas</h2>{'<p class="muted">No hay tareas registradas.</p>' if not tasks else ''.join(f"<div class='session'><strong>{escape(names.get(t.subject_id,'Materia'))}</strong> · {escape(t.name)} · {t.deadline} · {t.progress}% " + (f"<form method='post' action='/tasks/{t.id}/complete' style='display:inline'><button type='submit'>Marcar como completada</button></form>" if t.status != 'completed' else '✅ Completada') + "</div>" for t in tasks)}</section>
 <section class="card wide"><h2>Exámenes registrados</h2>{'<p class="muted">No hay exámenes registrados.</p>' if not exams else ''.join(f"<p><strong>{escape(names.get(e.subject_id,'Materia'))}</strong> · {escape(e.name)} · {e.date} · preparación sugerida: {planner.estimate_exam_minutes(e)} min</p>" for e in exams)}</section>
 <section class="card wide"><h2>Evaluaciones registradas</h2>{'<p class="muted">Todavía no hay notas registradas.</p>' if not evaluations else ''.join(f"<p>{escape(names.get(next((e.subject_id for e in exams if e.id==v.exam_id),0),'Materia'))} · {v.grade:g}/100 · {v.date} · {escape(v.evaluation_type)}</p>" for v in evaluations)}</section>'''
-    if plan is not None: body += f'<section class="card wide"><h2>HOY · Plan generado</h2>{_plan_html(plan)}</section>'
+    if plan is not None:
+        body += f'<section class="card wide"><h2>HOY · Plan generado</h2>{_plan_html(plan)}</section>'
     return _page(body+'</div>')
 
 
+def _analysis_dashboard():
+    subjects = database.list_subjects(database_path=database.DATABASE_PATH)
+    exams = database.list_exams(database_path=database.DATABASE_PATH)
+    evaluations = database.list_evaluations(database_path=database.DATABASE_PATH)
+    performance = analyzer.build_performance_report(subjects, exams, evaluations)
+    return _page(
+        f'<header><h1>StudyFlow</h1><div class="muted">Análisis académico detallado · <span class="badge">Punto 9</span></div></header>'
+        f'{_performance_summary_html(performance)}'
+        f'<form method="get" action="/"><button type="submit">Volver al inicio</button></form>'
+    )
 def _make_plan(form):
     subjects = database.list_subjects(database_path=database.DATABASE_PATH)
     return planner.generate_study_plan(database.list_tasks(database_path=database.DATABASE_PATH), database.list_exams(database_path=database.DATABASE_PATH), _float(form,'hours','Las horas'), start_datetime=_start(form.get('start_time','')), subject_names=_names(subjects))
@@ -159,6 +211,12 @@ def application(environ, start_response):
     if path == '/api/averages' and method == 'GET':
         try: return _json(start_response, analyzer.build_average_report(database.list_subjects(database_path=database.DATABASE_PATH), database.list_exams(database_path=database.DATABASE_PATH), database.list_evaluations(database_path=database.DATABASE_PATH)))
         except database.DatabaseError as exc: return _json(start_response, {'error':str(exc)}, '500 Internal Server Error')
+    if path == '/api/performance' and method == 'GET':
+        try:
+            subjects=database.list_subjects(database_path=database.DATABASE_PATH); exams=database.list_exams(database_path=database.DATABASE_PATH); evaluations=database.list_evaluations(database_path=database.DATABASE_PATH)
+            return _json(start_response, analyzer.build_performance_report(subjects, exams, evaluations))
+        except (ValueError,database.DatabaseError) as exc:
+            return _json(start_response, {'error':str(exc)}, '400 Bad Request')
     if path == '/api/priorities' and method == 'GET':
         try:
             subjects=database.list_subjects(database_path=database.DATABASE_PATH); items=planner.rank_study_items(database.list_tasks(database_path=database.DATABASE_PATH), database.list_exams(database_path=database.DATABASE_PATH), date.today()); names=_names(subjects)
@@ -170,6 +228,12 @@ def application(environ, start_response):
             q={k:(v[0] if v else '') for k,v in parse_qs(environ.get('QUERY_STRING',''),keep_blank_values=True).items()}; plan=_make_plan(q)
             return _json(start_response, {'date':date.today(),'available_hours':_float(q,'hours','Las horas'),'sessions':[_session_dict(x) for x in plan],'study_minutes':sum(x.minutes for x in plan)})
         except (ValueError,database.DatabaseError) as exc: return _json(start_response, {'error':str(exc)}, '400 Bad Request')
+    if path == '/analysis' and method == 'GET':
+        try:
+            return _html(start_response, _analysis_dashboard())
+        except (ValueError,database.DatabaseError) as exc:
+            return _html(start_response, _page(f'<section class="card"><h2>Error</h2><p>{escape(str(exc))}</p></section>','Error'),'500 Internal Server Error')
+
     if path in {'/','/evaluations'} and method == 'GET':
         try: return _html(start_response, _dashboard())
         except (ValueError,database.DatabaseError) as exc: return _html(start_response, _page(f'<section class="card"><h2>Error</h2><p>{escape(str(exc))}</p></section>','Error'),'500 Internal Server Error')

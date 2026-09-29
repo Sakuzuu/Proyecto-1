@@ -10,7 +10,9 @@ Aplicación de Python para gestionar el estudio y analizar el rendimiento acadé
 **Punto 4 — Sistema de tareas y actividades:** completado.  
 **Punto 5 — Sistema de exámenes:** completado.  
 **Punto 6 — Registro de notas y evaluaciones:** completado.  
-**Punto 7 — Promedios:** completado.
+**Punto 7 — Promedios:** completado.  
+**Punto 8 — Generador de plan de estudio:** completado.  
+**Punto 9 — Dashboard de rendimiento:** completado.
 
 ## Punto 7 — Promedios
 
@@ -36,6 +38,11 @@ Incluye:
 - Comparación con la meta de cada materia.
 - Historial de evaluaciones.
 - Endpoint JSON `/api/averages`.
+- Endpoint JSON `/api/priorities`.
+- Endpoint JSON `/api/study-plan`.
+- Endpoint JSON `/api/performance`.
+- Dashboard de rendimiento con promedio general, mejor materia, menor promedio y tendencia.
+- Página de análisis detallado en `/analysis`.
 - Endpoint de salud `/health`.
 - Diseño responsive para escritorio y móvil.
 
@@ -95,7 +102,9 @@ StudyFlow/
 │   ├── test_tasks.py
 │   ├── test_exams.py
 │   ├── test_evaluations.py
-│   └── test_averages.py
+│   ├── test_averages.py
+│   ├── test_planner.py
+│   └── test_performance.py
 ├── .github/
 │   └── workflows/
 │       └── tests.yml

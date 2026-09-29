@@ -89,8 +89,88 @@ def build_average_report(
     }
 
 
+def _trend_stats(grades: Sequence[float]) -> tuple[str, float | None, str]:
+    """Return trend direction, relative percentage and display label."""
+    if len(grades) < 2:
+        return "insufficient", None, "→ Sin datos suficientes"
+    midpoint = len(grades) // 2
+    previous_average = calculate_average(grades[:midpoint])
+    recent_average = calculate_average(grades[midpoint:])
+    if previous_average == 0:
+        if recent_average == 0:
+            return "flat", 0.0, "→ 0.0%"
+        return "up", None, "↑ N/D"
+    change = ((recent_average - previous_average) / previous_average) * 100
+    if abs(change) < 0.05:
+        return "flat", round(change, 2), "→ 0.0%"
+    direction = "up" if change > 0 else "down"
+    arrow = "↑" if change > 0 else "↓"
+    return direction, round(change, 2), f"{arrow} {change:+.1f}%"
+
+
 def detect_trend(grades: Sequence[float]) -> str:
-    raise NotImplementedError("Trend detection belongs to milestone 9.")
+    """Describe the change between earlier and more recent results."""
+    return _trend_stats(grades)[2]
+
+
+def build_performance_report(
+    subjects: Sequence[Subject],
+    exams: Sequence[Exam],
+    evaluations: Sequence[Evaluation],
+) -> dict:
+    """Build the dashboard metrics for academic performance."""
+    average_report = build_average_report(subjects, exams, evaluations)
+    exam_to_subject = {exam.id: exam.subject_id for exam in exams}
+    subject_rows = []
+    for row in average_report["subjects"]:
+        history = sorted(
+            (
+                evaluation
+                for evaluation in evaluations
+                if exam_to_subject.get(evaluation.exam_id) == row["subject_id"]
+            ),
+            key=lambda evaluation: (evaluation.date, evaluation.id or 0),
+        )
+        direction, change, label = _trend_stats(
+            [evaluation.grade for evaluation in history]
+        )
+        subject_rows.append(
+            {
+                **row,
+                "trend": label,
+                "trend_status": direction,
+                "trend_change_percent": change,
+            }
+        )
+
+    evaluated = [row for row in subject_rows if row["evaluation_count"] > 0]
+    ordered_desc = sorted(
+        evaluated, key=lambda row: (-row["average"], row["subject_name"].casefold())
+    )
+    ordered_asc = sorted(
+        evaluated, key=lambda row: (row["average"], row["subject_name"].casefold())
+    )
+    best = ordered_desc[0] if ordered_desc else None
+    lowest = ordered_asc[0] if ordered_asc else None
+
+    all_history = sorted(
+        evaluations, key=lambda evaluation: (evaluation.date, evaluation.id or 0)
+    )
+    overall_direction, overall_change, overall_label = _trend_stats(
+        [evaluation.grade for evaluation in all_history]
+    )
+    return {
+        "general_average": average_report["general_average"],
+        "evaluated_exams": average_report["evaluated_exams"],
+        "total_evaluations": average_report["total_evaluations"],
+        "evaluated_subjects": len(evaluated),
+        "best_subject": best,
+        "lowest_subject": lowest,
+        "overall_trend": overall_label,
+        "overall_trend_status": overall_direction,
+        "overall_trend_change_percent": overall_change,
+        "subjects": subject_rows,
+    }
 
 
 def detect_strengths_and_weaknesses(*args, **kwargs):
