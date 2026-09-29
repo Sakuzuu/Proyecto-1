@@ -8,13 +8,14 @@ from urllib.parse import parse_qs
 from wsgiref.simple_server import make_server
 
 import analyzer
+import charts
 import database
 import planner
 
 
 def _page(body, title="StudyFlow"):
     return f'''<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(title)}</title><style>
-body{{margin:0;background:#f4f6fb;color:#182230;font:15px system-ui,sans-serif}}main{{max-width:1100px;margin:auto;padding:24px 16px}}h1{{margin:0}}h2{{margin-bottom:10px}}.grid{{display:grid;grid-template-columns:1fr 1fr;gap:16px}}.card{{background:#fff;border:1px solid #e4e7ec;border-radius:14px;padding:16px}}.wide{{grid-column:1/-1}}.metric{{font-size:30px;font-weight:800}}.muted{{color:#667085}}form{{display:grid;gap:7px}}input,select,textarea,button{{padding:9px;border:1px solid #d0d5dd;border-radius:8px;font:inherit}}button{{background:#182230;color:#fff;cursor:pointer}}table{{width:100%;border-collapse:collapse}}th,td{{padding:8px;text-align:left;border-bottom:1px solid #eaecf0}}th{{color:#667085}}.badge{{display:inline-block;padding:3px 7px;border-radius:999px;background:#f2f4f7;font-size:12px}}.red{{background:#fef3f2;color:#b42318}}.orange{{background:#fffaeb;color:#b54708}}.green{{background:#ecfdf3;color:#067647}}.notice,.error,.warning{{padding:10px 12px;border-radius:8px;margin-bottom:12px}}.notice{{background:#ecfdf3;color:#067647}}.error{{background:#fef3f2;color:#b42318}}.warning{{background:#fffaeb;color:#b54708}}.session{{border:1px solid #e4e7ec;border-radius:10px;padding:10px;margin:8px 0}}.session-time{{font-size:17px;font-weight:800}}@media(max-width:800px){{.grid{{grid-template-columns:1fr}}.wide{{grid-column:auto}}}}
+body{{margin:0;background:#f4f6fb;color:#182230;font:15px system-ui,sans-serif}}main{{max-width:1100px;margin:auto;padding:24px 16px}}h1{{margin:0}}h2{{margin-bottom:10px}}.grid{{display:grid;grid-template-columns:1fr 1fr;gap:16px}}.card{{background:#fff;border:1px solid #e4e7ec;border-radius:14px;padding:16px}}.wide{{grid-column:1/-1}}.metric{{font-size:30px;font-weight:800}}.muted{{color:#667085}}form{{display:grid;gap:7px}}input,select,textarea,button{{padding:9px;border:1px solid #d0d5dd;border-radius:8px;font:inherit}}button{{background:#182230;color:#fff;cursor:pointer}}table{{width:100%;border-collapse:collapse}}th,td{{padding:8px;text-align:left;border-bottom:1px solid #eaecf0}}th{{color:#667085}}.badge{{display:inline-block;padding:3px 7px;border-radius:999px;background:#f2f4f7;font-size:12px}}.red{{background:#fef3f2;color:#b42318}}.orange{{background:#fffaeb;color:#b54708}}.green{{background:#ecfdf3;color:#067647}}.notice,.error,.warning{{padding:10px 12px;border-radius:8px;margin-bottom:12px}}.notice{{background:#ecfdf3;color:#067647}}.error{{background:#fef3f2;color:#b42318}}.warning{{background:#fffaeb;color:#b54708}}.session{{border:1px solid #e4e7ec;border-radius:10px;padding:10px;margin:8px 0}}.session-time{{font-size:17px;font-weight:800}}.metric-grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}}.metric-box{{background:#f8fafc;border:1px solid #eaecf0;border-radius:10px;padding:12px}}.metric-small{{font-size:18px;margin-top:4px}}.table-wrap{{overflow-x:auto}}.chart{{display:block;width:100%;height:auto;border:1px solid #eaecf0;border-radius:10px;background:#fff}}@media(max-width:900px){{.metric-grid{{grid-template-columns:1fr 1fr}}}}@media(max-width:800px){{.grid{{grid-template-columns:1fr}}.wide{{grid-column:auto}}}}
 </style></head><body><main>{body}<p class="muted">StudyFlow · Planificador académico integrado</p></main></body></html>'''
 
 
@@ -146,7 +147,10 @@ def _performance_summary_html(performance):
 <div class="metric-box"><div class="muted">Tendencia general</div><div class="metric-small"><span class="badge {trend_class}">{escape(performance['overall_trend'])}</span></div></div>
 </div>
 <h3>Promedios por materia</h3><div class="table-wrap">{table}</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
 <form method="get" action="/analysis"><button type="submit">Abrir análisis detallado</button></form>
+<form method="get" action="/charts"><button type="submit">Ver gráficos</button></form>
+</div>
 </section>
 """
 
@@ -182,6 +186,31 @@ def _dashboard(message="", error="", plan=None):
     if plan is not None:
         body += f'<section class="card wide"><h2>HOY · Plan generado</h2>{_plan_html(plan)}</section>'
     return _page(body+'</div>')
+
+
+def _charts_dashboard():
+    subjects = database.list_subjects(database_path=database.DATABASE_PATH)
+    tasks = database.list_tasks(database_path=database.DATABASE_PATH)
+    exams = database.list_exams(database_path=database.DATABASE_PATH)
+    evaluations = database.list_evaluations(database_path=database.DATABASE_PATH)
+    return _page(
+        f'''<header><h1>StudyFlow</h1><div class="muted">Visualizaciones académicas · <span class="badge">Punto 10</span></div></header>
+<section class="card wide">
+<h2>📈 Gráficos de rendimiento</h2>
+<p class="muted">Las visualizaciones se actualizan con tus evaluaciones, materias, exámenes y actividades registradas.</p>
+<h3>Evolución de notas</h3>
+<img class="chart" src="/charts/grade-evolution.svg" alt="Evolución de notas">
+<h3>Promedio por materia</h3>
+<img class="chart" src="/charts/subject-averages.svg" alt="Promedio por materia">
+<h3>Tiempo de estudio estimado</h3>
+<img class="chart" src="/charts/study-time.svg" alt="Tiempo de estudio estimado por materia">
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+<form method="get" action="/analysis"><button type="submit">Volver al análisis</button></form>
+<form method="get" action="/"><button type="submit">Volver al inicio</button></form>
+</div>
+</section>'''
+    )
+
 
 
 def _analysis_dashboard():
@@ -228,6 +257,33 @@ def application(environ, start_response):
             q={k:(v[0] if v else '') for k,v in parse_qs(environ.get('QUERY_STRING',''),keep_blank_values=True).items()}; plan=_make_plan(q)
             return _json(start_response, {'date':date.today(),'available_hours':_float(q,'hours','Las horas'),'sessions':[_session_dict(x) for x in plan],'study_minutes':sum(x.minutes for x in plan)})
         except (ValueError,database.DatabaseError) as exc: return _json(start_response, {'error':str(exc)}, '400 Bad Request')
+    if path == '/charts' and method == 'GET':
+        try:
+            return _html(start_response, _charts_dashboard())
+        except (ValueError, database.DatabaseError) as exc:
+            return _html(start_response, _page(f'<section class="card"><h2>Error</h2><p>{escape(str(exc))}</p></section>','Error'),'500 Internal Server Error')
+    if path in {'/charts/grade-evolution.svg', '/charts/subject-averages.svg', '/charts/study-time.svg'} and method == 'GET':
+        try:
+            subjects = database.list_subjects(database_path=database.DATABASE_PATH)
+            tasks = database.list_tasks(database_path=database.DATABASE_PATH)
+            exams = database.list_exams(database_path=database.DATABASE_PATH)
+            evaluations = database.list_evaluations(database_path=database.DATABASE_PATH)
+            if path.endswith('grade-evolution.svg'):
+                svg = charts.plot_grade_evolution(evaluations, exams, subjects)
+            elif path.endswith('subject-averages.svg'):
+                svg = charts.plot_subject_averages(subjects, exams, evaluations)
+            else:
+                svg = charts.plot_study_time(tasks, subjects)
+            data = svg.encode("utf-8")
+            start_response("200 OK", [
+                ("Content-Type", "image/svg+xml; charset=utf-8"),
+                ("Content-Length", str(len(data))),
+                ("Cache-Control", "no-store"),
+            ])
+            return [data]
+        except (ValueError, database.DatabaseError) as exc:
+            return _json(start_response, {'error': str(exc)}, '400 Bad Request')
+
     if path == '/analysis' and method == 'GET':
         try:
             return _html(start_response, _analysis_dashboard())
