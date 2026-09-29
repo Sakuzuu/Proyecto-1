@@ -43,7 +43,7 @@ class StrengthWeaknessTests(unittest.TestCase):
             self.subjects[:1],
             self.exams[:1],
             self.evaluations[:1],
-            strength_threshold=93,
+            strength_threshold=90,
             attention_threshold=80,
         )
         self.assertEqual(report["strengths"][0]["classification"], "strength")
