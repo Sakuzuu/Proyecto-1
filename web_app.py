@@ -464,6 +464,37 @@ def application(environ, start_response):
         try:
             form=_form(environ)
             if path == '/plan': return _html(start_response,_dashboard(plan=_make_plan(form)))
+            if path == '/subjects':
+                raw = _text(form, 'subjects', 'Las materias')
+                subject_names = [name.strip() for name in re.split(r'[\\r\\n]+', raw) if name.strip()]
+                if not subject_names:
+                    raise ValueError('Escribe al menos una materia.')
+                if len(subject_names) > 50:
+                    raise ValueError('Puedes agregar como máximo 50 materias a la vez.')
+                existing = {
+                    subject.name.casefold(): subject.name
+                    for subject in database.list_subjects(database_path=database.DATABASE_PATH)
+                }
+                added = []
+                repeated = []
+                for subject_name in subject_names:
+                    key = subject_name.casefold()
+                    if key in existing:
+                        repeated.append(existing[key])
+                        continue
+                    created = database.create_subject(
+                        subject_name,
+                        database_path=database.DATABASE_PATH,
+                    )
+                    existing[key] = created.name
+                    added.append(created.name)
+                if added and repeated:
+                    message = f"Materias guardadas: {', '.join(added)}. Ya existían: {', '.join(repeated)}."
+                elif added:
+                    message = f"Materias guardadas: {', '.join(added)}."
+                else:
+                    message = "Todas las materias que escribiste ya estaban guardadas."
+                return _html(start_response, _dashboard(message=message))
             if path == '/tasks':
                 sid=_int(form,'subject_id','La materia'); deadline=_date(form,'deadline','La fecha límite'); progress=_int(form,'progress','El progreso'); status=_text(form,'status','El estado')
                 if deadline < date.today(): raise ValueError('La fecha límite no puede estar antes de hoy.')
