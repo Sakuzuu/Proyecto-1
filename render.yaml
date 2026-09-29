@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: studyflow
+    runtime: python
+    plan: free
+    buildCommand: python -m compileall -q .
+    startCommand: python web_app.py
+    healthCheckPath: /health
+    autoDeployTrigger: commit
