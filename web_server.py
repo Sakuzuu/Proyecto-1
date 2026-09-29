@@ -8,6 +8,8 @@ import analyzer
 import database
 import web_app
 
+_ORIGINAL_APPLICATION = web_app.application
+
 
 def _query(environ):
     return {k: (v[0] if v else "") for k, v in parse_qs(
@@ -182,7 +184,7 @@ def application(environ, start_response):
         except (ValueError, database.DatabaseError) as exc:
             return _json(start_response, {"error": str(exc)}, "400 Bad Request")
 
-    return web_app.application(environ, start_response)
+    return _ORIGINAL_APPLICATION(environ, start_response)
 
 
 if __name__ == "__main__":
