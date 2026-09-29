@@ -13,7 +13,8 @@ Aplicación de Python para gestionar el estudio y analizar el rendimiento acadé
 **Punto 7 — Promedios:** completado.  
 **Punto 8 — Generador de plan de estudio:** completado.  
 **Punto 9 — Dashboard de rendimiento:** completado.  
-**Punto 10 — Visualizaciones académicas:** completado.
+**Punto 10 — Visualizaciones académicas:** completado.  
+**Punto 11 — Detección de fortalezas y debilidades:** completado.
 
 ## Punto 7 — Promedios
 
@@ -42,8 +43,9 @@ Incluye:
 - Endpoint JSON `/api/priorities`.
 - Endpoint JSON `/api/study-plan`.
 - Endpoint JSON `/api/performance`.
+- Endpoint JSON `/api/insights` para fortalezas, rendimiento normal, atención y tendencias.
 - Dashboard de rendimiento con promedio general, mejor materia, menor promedio y tendencia.
-- Página de análisis detallado en `/analysis`.  
+- Página de análisis detallado en `/analysis`, con umbrales configurables para fortalezas y atención.
 - Página de gráficos en `/charts` con evolución de notas, promedios por materia y tiempo de estudio.
 - Endpoint de salud `/health`.
 - Diseño responsive para escritorio y móvil.
@@ -51,7 +53,7 @@ Incluye:
 Ejecutar localmente:
 
 ```bash
-python web_app.py
+python web_server.py
 ```
 
 Abrir:
@@ -73,9 +75,9 @@ Render asigna una URL pública `onrender.com` al servicio cuando se crea el desp
 ```text
 Navegador
    ↓ HTTP
-web_app.py (WSGI)
+web_server.py (WSGI)
    ↓
-analyzer.py
+web_app.py + analyzer.py
    ↓
 database.py
    ↓
@@ -88,6 +90,7 @@ SQLite
 StudyFlow/
 ├── main.py
 ├── web_app.py
+├── web_server.py
 ├── database.py
 ├── models.py
 ├── planner.py
