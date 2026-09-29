@@ -9,43 +9,37 @@ Aplicación de Python para gestionar el estudio y analizar el rendimiento acadé
 **Punto 3 — Base de datos:** completado.  
 **Punto 4 — Sistema de tareas y actividades:** completado.  
 **Punto 5 — Sistema de exámenes:** completado.  
-**Punto 6 — Registro de notas y evaluaciones:** completado.
+**Punto 6 — Registro de notas y evaluaciones:** completado.  
+**Punto 7 — Promedios:** completado.
 
-## Punto 6 — Registro de notas
+## Punto 7 — Promedios
 
-Los resultados se almacenan como evaluaciones separadas del examen programado.
+StudyFlow calcula los promedios académicos a partir de las evaluaciones registradas.
 
-Cada evaluación contiene:
+Reglas actuales:
 
-```text
-id
-exam_id
-grade
-date
-evaluation_type
-```
+- Para cada examen se toma la **evaluación más reciente** como resultado actual.
+- El promedio de una materia usa los pesos de sus exámenes cuando la suma de pesos es mayor que cero.
+- Si todos los pesos relevantes son cero, se usa el promedio aritmético.
+- Las evaluaciones históricas siguen almacenadas para las fases futuras de tendencias y progreso.
+- También se calcula un promedio general con la misma regla de ponderación.
 
-El backend permite:
+## Interfaz web
 
-- Registrar notas.
-- Consultar una nota por ID.
-- Listar evaluaciones.
-- Filtrar evaluaciones por examen.
-- Editar notas.
-- Eliminar notas.
-- Validar nota entre 0 y 100.
-- Validar fecha, examen y tipo de evaluación.
-- Impedir evaluaciones asociadas a exámenes inexistentes.
+La aplicación funciona como una página web con WSGI y la biblioteca estándar de Python.
 
-La separación entre `exams` y `evaluations` permitirá analizar la evolución histórica sin modificar el modelo de exámenes.
+Incluye:
 
-## Primera interfaz web funcional
+- Registro de notas.
+- Promedio general actual.
+- Promedios por materia.
+- Comparación con la meta de cada materia.
+- Historial de evaluaciones.
+- Endpoint JSON `/api/averages`.
+- Endpoint de salud `/health`.
+- Diseño responsive para escritorio y móvil.
 
-El proyecto incluye una interfaz web en `web_app.py`.
-
-No depende de Tkinter ni de paquetes externos: utiliza WSGI y la biblioteca estándar de Python.
-
-Ejecutarla localmente:
+Ejecutar localmente:
 
 ```bash
 python web_app.py
@@ -57,18 +51,13 @@ Abrir:
 http://localhost:8000
 ```
 
-La página permite:
+## Publicación en internet
 
-- Ver materias y exámenes.
-- Registrar una nota mediante formulario.
-- Ver evaluaciones registradas.
-- Consultar `/health`.
+El repositorio contiene `render.yaml` configurado para Render como servicio web Python, incluyendo `/health` como health check.
 
-### Publicación mediante enlace
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Sakuzuu/Proyecto-1)
 
-`web_app.py` expone una aplicación WSGI y escucha en `0.0.0.0`, usando la variable de entorno `PORT`.
-
-El proyecto queda listo para ser conectado a un servicio de hosting Python que proporcione una URL pública. La creación de esa URL requiere desplegar el repositorio en un proveedor de hosting; este commit ya incluye el punto de entrada web.
+Render asigna una URL pública `onrender.com` al servicio cuando se crea el despliegue. El botón anterior permite crear el servicio desde este repositorio público. Una vez creado, los siguientes cambios en la rama conectada pueden redeplegarse automáticamente.
 
 ## Arquitectura
 
@@ -77,12 +66,12 @@ Navegador
    ↓ HTTP
 web_app.py (WSGI)
    ↓
+analyzer.py
+   ↓
 database.py
    ↓
 SQLite
 ```
-
-La interfaz web reutiliza el mismo backend de datos que las futuras funciones del proyecto.
 
 ## Estructura
 
@@ -99,12 +88,17 @@ StudyFlow/
 ├── charts.py
 ├── schema.sql
 ├── Procfile
+├── render.yaml
 ├── tests/
 │   ├── test_subjects.py
 │   ├── test_database_schema.py
 │   ├── test_tasks.py
 │   ├── test_exams.py
-│   └── test_evaluations.py
+│   ├── test_evaluations.py
+│   └── test_averages.py
+├── .github/
+│   └── workflows/
+│       └── tests.yml
 ├── README.md
 └── data/
 ```
@@ -113,7 +107,7 @@ StudyFlow/
 
 - Python 3
 - SQLite
-- WSGI + HTML/CSS (interfaz web)
+- WSGI + HTML/CSS
 - Tkinter (interfaz de escritorio temporal)
 - Matplotlib (fase posterior)
 - API de IA opcional (fase posterior)
