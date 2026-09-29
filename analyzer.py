@@ -1,8 +1,42 @@
 """Academic performance analysis logic for StudyFlow."""
+from dataclasses import dataclass
+import math
+import os
 from typing import Sequence
 
 from calculations import average, weighted_average
 from models import Evaluation, Exam, Subject
+
+
+DEFAULT_STRENGTH_THRESHOLD = 90.0
+DEFAULT_ATTENTION_THRESHOLD = 75.0
+
+
+@dataclass(frozen=True)
+class PerformanceThresholds:
+    """Configurable boundaries for academic classification."""
+
+    strength: float = DEFAULT_STRENGTH_THRESHOLD
+    attention: float = DEFAULT_ATTENTION_THRESHOLD
+
+    def __post_init__(self) -> None:
+        for name, value in (("strength", self.strength), ("attention", self.attention)):
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(f"{name} threshold must be a number.")
+            if not math.isfinite(float(value)) or not 0 <= float(value) <= 100:
+                raise ValueError(f"{name} threshold must be between 0 and 100.")
+        if float(self.attention) >= float(self.strength):
+            raise ValueError("attention threshold must be lower than strength threshold.")
+
+
+def get_default_thresholds() -> PerformanceThresholds:
+    """Read deployment defaults from environment variables, with safe fallbacks."""
+    try:
+        strength = float(os.getenv("STUDYFLOW_STRENGTH_THRESHOLD", DEFAULT_STRENGTH_THRESHOLD))
+        attention = float(os.getenv("STUDYFLOW_ATTENTION_THRESHOLD", DEFAULT_ATTENTION_THRESHOLD))
+        return PerformanceThresholds(strength, attention)
+    except (TypeError, ValueError):
+        return PerformanceThresholds()
 
 
 def calculate_average(grades: Sequence[float]) -> float:
@@ -173,5 +207,110 @@ def build_performance_report(
     }
 
 
-def detect_strengths_and_weaknesses(*args, **kwargs):
-    raise NotImplementedError("Strength/weakness analysis belongs to milestone 11.")
+def _classify_average(average_grade: float, thresholds: PerformanceThresholds) -> str:
+    if average_grade >= thresholds.strength:
+        return "strength"
+    if average_grade < thresholds.attention:
+        return "attention"
+    return "normal"
+
+
+def _classification_label(classification: str) -> str:
+    return {
+        "strength": "Fortaleza",
+        "normal": "Normal",
+        "attention": "Atención",
+        "no_data": "Sin datos",
+    }[classification]
+
+
+def detect_strengths_and_weaknesses(
+    subjects: Sequence[Subject],
+    exams: Sequence[Exam],
+    evaluations: Sequence[Evaluation],
+    strength_threshold: float | None = None,
+    attention_threshold: float | None = None,
+) -> dict:
+    """Transform academic averages and trends into actionable classifications.
+
+    A subject is a strength when its current average is at or above the
+    strength threshold, normal when it is between the thresholds, and
+    attention when it is below the attention threshold. Thresholds are
+    configurable and validated before any classification is produced.
+    """
+    defaults = get_default_thresholds()
+    thresholds = PerformanceThresholds(
+        defaults.strength if strength_threshold is None else float(strength_threshold),
+        defaults.attention if attention_threshold is None else float(attention_threshold),
+    )
+    performance = build_performance_report(subjects, exams, evaluations)
+
+    enriched_rows = []
+    strengths = []
+    normal = []
+    attention = []
+    without_data = []
+    trends = []
+
+    for row in performance["subjects"]:
+        if row["evaluation_count"] == 0:
+            classification = "no_data"
+        else:
+            classification = _classify_average(row["average"], thresholds)
+
+        enriched = {
+            **row,
+            "classification": classification,
+            "classification_label": _classification_label(classification),
+        }
+        enriched_rows.append(enriched)
+
+        if classification == "strength":
+            strengths.append(enriched)
+        elif classification == "normal":
+            normal.append(enriched)
+        elif classification == "attention":
+            attention.append(enriched)
+        else:
+            without_data.append(enriched)
+
+        if row["evaluation_count"] > 0:
+            trends.append(
+                {
+                    "subject_id": row["subject_id"],
+                    "subject_name": row["subject_name"],
+                    "trend": row["trend"],
+                    "trend_status": row["trend_status"],
+                    "trend_change_percent": row["trend_change_percent"],
+                }
+            )
+
+    return {
+        "thresholds": {
+            "strength": thresholds.strength,
+            "attention": thresholds.attention,
+        },
+        "strengths": strengths,
+        "normal": normal,
+        "attention": attention,
+        "without_data": without_data,
+        "trends": trends,
+        "subjects": enriched_rows,
+    }
+
+
+def build_strength_weakness_report(
+    subjects: Sequence[Subject],
+    exams: Sequence[Exam],
+    evaluations: Sequence[Evaluation],
+    strength_threshold: float | None = None,
+    attention_threshold: float | None = None,
+) -> dict:
+    """Named alias for the milestone-11 analysis API."""
+    return detect_strengths_and_weaknesses(
+        subjects,
+        exams,
+        evaluations,
+        strength_threshold,
+        attention_threshold,
+    )
