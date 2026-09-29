@@ -1,7 +1,8 @@
 import sqlite3
 import tempfile
 import unittest
-from datetime import date\nfrom pathlib import Path
+from datetime import date
+from pathlib import Path
 
 from database import (
     DuplicateSubjectError,
