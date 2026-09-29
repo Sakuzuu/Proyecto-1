@@ -183,9 +183,7 @@ class ChartWebTests(unittest.TestCase):
             self.assertEqual(status, "200 OK")
             self.assertEqual(headers["Content-Type"], "image/png")
             self.assertGreater(len(body), 1000)
-            self.assertTrue(body.startswith(b"PNG
-
-"))
+            self.assertTrue(body.startswith(b"\x89PNG\r\n\x1a\n"))
 
     def test_navigation_back_to_analysis(self):
         status, _, body = self.request("/charts")
