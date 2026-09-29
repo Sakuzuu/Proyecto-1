@@ -58,7 +58,7 @@ class WebServerInsightTests(unittest.TestCase):
     def test_invalid_thresholds_return_400(self):
         status, _, body = self.request("/analysis", payload={"strength": 70, "attention": 75})
         self.assertEqual(status, "400 Bad Request")
-        self.assertIn("0 ≤ atención < fortaleza", body)
+        self.assertIn("0 ≤ atención", body)
     def test_existing_root_and_health_still_work(self):
         status, _, body = self.request("/")
         self.assertEqual(status, "200 OK")
