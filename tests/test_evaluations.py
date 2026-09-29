@@ -156,7 +156,7 @@ class WebAppTests(unittest.TestCase):
         self.assertEqual(status, "200 OK")
         self.assertEqual(headers["Content-Type"], "text/html; charset=utf-8")
         self.assertIn("StudyFlow", body)
-        self.assertIn("Registrar nota", body)
+        self.assertIn("Registrar evaluación", body)
         self.assertIn("Parcial", body)
 
     def test_browser_can_register_grade(self):

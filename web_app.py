@@ -155,6 +155,35 @@ def _performance_summary_html(performance):
 """
 
 
+def _subject_picker(subjects, field_name="subject_id"):
+    if not subjects:
+        return '<div class="empty-picker">No hay materias guardadas todavía. Usa <strong>Agregar materias</strong> primero.</div>'
+    items = []
+    for subject in subjects:
+        items.append(
+            f'<label class="picker-option">'
+            f'<input type="radio" name="{escape(field_name)}" value="{subject.id}" required>'
+            f'<span><strong>{escape(subject.name)}</strong>'
+            f'<small>Meta: {subject.target_grade:g}/100</small></span></label>'
+        )
+    return '<div class="picker-list">' + ''.join(items) + '</div>'
+
+
+def _exam_picker(exams, subjects):
+    names = _names(subjects)
+    if not exams:
+        return '<div class="empty-picker">No hay exámenes guardados todavía. Crea un examen primero.</div>'
+    items = []
+    for exam in exams:
+        items.append(
+            f'<label class="picker-option">'
+            f'<input type="radio" name="exam_id" value="{exam.id}" required>'
+            f'<span><strong>{escape(names.get(exam.subject_id, "Materia"))} · {escape(exam.name)}</strong>'
+            f'<small>{exam.date} · dificultad {exam.difficulty}/10 · peso {exam.weight:g}%</small></span></label>'
+        )
+    return '<div class="picker-list">' + ''.join(items) + '</div>'
+
+
 def _dashboard(message="", error="", plan=None):
     subjects = database.list_subjects(database_path=database.DATABASE_PATH)
     tasks = database.list_tasks(database_path=database.DATABASE_PATH)
@@ -164,28 +193,166 @@ def _dashboard(message="", error="", plan=None):
     performance = analyzer.build_performance_report(subjects, exams, evaluations)
     names = _names(subjects)
     today = date.today().isoformat()
-    notice = (f'<div class="notice">{escape(message)}</div>' if message else '') + (f'<div class="error">{escape(error)}</div>' if error else '')
-    overdue = sum(1 for x in planner.rank_study_items(tasks, exams, date.today()) if x['overdue'])
+    notice = (
+        (f'<div class="notice">{escape(message)}</div>' if message else '')
+        + (f'<div class="error">{escape(error)}</div>' if error else '')
+    )
+    overdue = sum(
+        1 for x in planner.rank_study_items(tasks, exams, date.today()) if x["overdue"]
+    )
     if overdue:
-        notice += f'<div class="warning">Hay {overdue} elemento(s) vencido(s). No se programan en el plan.</div>'
-    subs = ''.join(f'<option value="{s.id}">{escape(s.name)}</option>' for s in subjects)
-    exs = ''.join(f'<option value="{e.id}">{escape(names.get(e.subject_id,"Materia"))} — {escape(e.name)}</option>' for e in exams)
-    dis = ' disabled' if not subjects else ''
-    edis = ' disabled' if not exams else ''
-    start = planner._round_up_to_five_minutes(datetime.now()).strftime('%H:%M')
-    body = f'''<header><h1>StudyFlow</h1><div class="muted">Planificación y análisis académico · <span class="badge">Puntos 8–9</span></div></header>{notice}<div class="grid">
-<section class="card"><h2>📅 Generador de plan de estudio</h2><p class="muted">Introduce tus horas disponibles y StudyFlow distribuye el tiempo entre tareas y exámenes según prioridad, tiempo y fecha límite.</p><form method="post" action="/plan"><label>Horas disponibles hoy</label><input name="hours" type="number" min="0.25" max="16" step="0.25" value="3" required><label>Hora de inicio</label><input name="start_time" type="time" value="{start}" required><button type="submit">Generar plan de hoy</button></form><p class="muted">Máximo 80 min por sesión y 15 min de descanso.</p></section>
-<section class="card"><h2>📊 Resumen</h2><div class="metric">{report['general_average']:g}/100</div><p class="muted">Promedio actual</p><p><span class="badge">{len(tasks)} tareas</span> <span class="badge">{len(exams)} exámenes</span> <span class="badge">{len(evaluations)} evaluaciones</span></p></section>
+        notice += (
+            f'<div class="warning">Hay {overdue} elemento(s) vencido(s). '
+            'No se programan en el plan.</div>'
+        )
+    start = planner._round_up_to_five_minutes(datetime.now()).strftime("%H:%M")
+    has_subjects = bool(subjects)
+    has_exams = bool(exams)
+
+    subject_list = _subject_picker(subjects)
+    exam_list = _exam_picker(exams, subjects)
+
+    body = f'''<header><h1>StudyFlow</h1>
+<div class="muted">Planificación y análisis académico · <span class="badge">Puntos 8–11</span></div>
+</header>{notice}<div class="grid">
+
+<section class="card wide">
+<h2>📚 Agregar materias</h2>
+<p class="muted">Escribe tus materias, una por línea. Se guardarán en la base de datos y después podrás elegirlas desde las listas visibles de tareas y exámenes.</p>
+<form method="post" action="/subjects">
+<label for="subjects">Agregar materias</label>
+<textarea id="subjects" name="subjects" rows="5" placeholder="Ejemplo:
+Cálculo
+Programación
+Física" required></textarea>
+<button type="submit">Guardar materias</button>
+</form>
+{f'<div class="saved-subjects"><strong>Materias guardadas:</strong> ' + ' · '.join(escape(s.name) for s in subjects) + '</div>' if subjects else '<p class="muted">Todavía no hay materias guardadas.</p>'}
+</section>
+
+<section class="card">
+<h2>📅 Generador de plan de estudio</h2>
+<p class="muted">Introduce tus horas disponibles y StudyFlow distribuye el tiempo entre tareas y exámenes según prioridad, tiempo y fecha límite.</p>
+<form method="post" action="/plan">
+<label>Horas disponibles hoy</label>
+<input name="hours" type="number" min="0.25" max="16" step="0.25" value="3" required>
+<label>Hora de inicio</label>
+<input name="start_time" type="time" value="{start}" required>
+<button type="submit">Generar plan de hoy</button>
+</form>
+<p class="muted">Máximo 80 min por sesión y 15 min de descanso.</p>
+</section>
+
+<section class="card">
+<h2>📊 Resumen</h2>
+<div class="metric">{report['general_average']:g}/100</div>
+<p class="muted">Promedio actual</p>
+<p><span class="badge">{len(tasks)} tareas</span> <span class="badge">{len(exams)} exámenes</span> <span class="badge">{len(evaluations)} evaluaciones</span></p>
+</section>
+
 {_performance_summary_html(performance)}
+
 <section class="card wide"><h2>🎯 Prioridades de estudio</h2>{_priority_html(tasks, exams, subjects)}</section>
-<section class="card wide"><h2>➕ Agregar datos</h2><div class="grid"><form method="post" action="/tasks"><h3>Nueva tarea</h3><label>Materia</label><select name="subject_id" required{dis}>{subs}</select><label>Nombre</label><input name="name" required><label>Descripción</label><textarea name="description"></textarea><label>Fecha límite</label><input name="deadline" type="date" min="{today}" required><label>Dificultad (1–10)</label><input name="difficulty" type="number" min="1" max="10" value="5" required><label>Tiempo estimado (min)</label><input name="estimated_minutes" type="number" min="1" value="60" required><label>Progreso</label><input name="progress" type="number" min="0" max="100" value="0" required><label>Estado</label><select name="status"><option value="pending">Pendiente</option><option value="in_progress">En progreso</option><option value="completed">Completada</option></select><button type="submit"{dis}>Guardar tarea</button></form><form method="post" action="/exams"><h3>Nuevo examen</h3><label>Materia</label><select name="subject_id" required{dis}>{subs}</select><label>Nombre</label><input name="name" required><label>Fecha del examen</label><input name="exam_date" type="date" min="{today}" required><label>Dificultad (1–10)</label><input name="difficulty" type="number" min="1" max="10" value="7" required><label>Peso (%)</label><input name="weight" type="number" min="0" max="100" step="0.1" value="20" required><button type="submit"{dis}>Guardar examen</button></form></div></section>
-<section class="card"><h2>📝 Registrar nota</h2><form method="post" action="/evaluations"><label>Examen</label><select name="exam_id" required{edis}>{exs}</select><label>Nota (0–100)</label><input name="grade" type="number" min="0" max="100" step="0.01" required{edis}><label>Fecha</label><input name="date" type="date" value="{today}" required{edis}><label>Tipo de evaluación</label><input name="type" required{edis}><button type="submit"{edis}>Guardar nota</button></form></section>
-<section class="card wide"><h2>✅ Tareas registradas</h2>{'<p class="muted">No hay tareas registradas.</p>' if not tasks else ''.join(f"<div class='session'><strong>{escape(names.get(t.subject_id,'Materia'))}</strong> · {escape(t.name)} · {t.deadline} · {t.progress}% " + (f"<form method='post' action='/tasks/{t.id}/complete' style='display:inline'><button type='submit'>Marcar como completada</button></form>" if t.status != 'completed' else '✅ Completada') + "</div>" for t in tasks)}</section>
-<section class="card wide"><h2>Exámenes registrados</h2>{'<p class="muted">No hay exámenes registrados.</p>' if not exams else ''.join(f"<p><strong>{escape(names.get(e.subject_id,'Materia'))}</strong> · {escape(e.name)} · {e.date} · preparación sugerida: {planner.estimate_exam_minutes(e)} min</p>" for e in exams)}</section>
-<section class="card wide"><h2>Evaluaciones registradas</h2>{'<p class="muted">Todavía no hay notas registradas.</p>' if not evaluations else ''.join(f"<p>{escape(names.get(next((e.subject_id for e in exams if e.id==v.exam_id),0),'Materia'))} · {v.grade:g}/100 · {v.date} · {escape(v.evaluation_type)}</p>" for v in evaluations)}</section>'''
+
+<section class="card wide">
+<h2>➕ Registrar tareas y exámenes</h2>
+<p class="muted">Ya no usamos menús desplegables. Selecciona una materia directamente de la lista visible.</p>
+<div class="grid">
+<form method="post" action="/tasks">
+<h3>Nueva tarea</h3>
+<label>Materia</label>
+{subject_list}
+<label>Nombre</label>
+<input name="name" required>
+<label>Descripción</label>
+<textarea name="description"></textarea>
+<label>Fecha límite</label>
+<input name="deadline" type="date" min="{today}" required>
+<label>Dificultad (1–10)</label>
+<input name="difficulty" type="number" min="1" max="10" value="5" required>
+<label>Tiempo estimado (min)</label>
+<input name="estimated_minutes" type="number" min="1" value="60" required>
+<label>Progreso</label>
+<input name="progress" type="number" min="0" max="100" value="0" required>
+<label>Estado</label>
+<div class="choice-list">
+<label><input type="radio" name="status" value="pending" checked required><span>Pendiente</span></label>
+<label><input type="radio" name="status" value="in_progress"><span>En progreso</span></label>
+<label><input type="radio" name="status" value="completed"><span>Completada</span></label>
+</div>
+<button type="submit"{"" if has_subjects else " disabled"}>Guardar tarea</button>
+{"" if has_subjects else '<p class="muted">Agrega al menos una materia para poder guardar tareas.</p>'}
+</form>
+
+<form method="post" action="/exams">
+<h3>Nuevo examen</h3>
+<label>Materia</label>
+{_subject_picker(subjects)}
+<label>Nombre</label>
+<input name="name" required>
+<label>Fecha del examen</label>
+<input name="exam_date" type="date" min="{today}" required>
+<label>Dificultad (1–10)</label>
+<input name="difficulty" type="number" min="1" max="10" value="7" required>
+<label>Peso (%)</label>
+<input name="weight" type="number" min="0" max="100" step="0.1" value="20" required>
+<button type="submit"{"" if has_subjects else " disabled"}>Guardar examen</button>
+{"" if has_subjects else '<p class="muted">Agrega al menos una materia para poder guardar exámenes.</p>'}
+</form>
+</div>
+</section>
+
+<section class="card wide">
+<h2>📝 Registrar evaluación</h2>
+<p class="muted">Selecciona el examen desde la lista visible. Así no dependemos de un menú desplegable.</p>
+<form method="post" action="/evaluations">
+<label>Examen</label>
+{exam_list}
+<label>Nota (0–100)</label>
+<input name="grade" type="number" min="0" max="100" step="0.01" required{"" if has_exams else " disabled"}>
+<label>Fecha</label>
+<input name="date" type="date" value="{today}" required{"" if has_exams else " disabled"}>
+<label>Tipo de evaluación</label>
+<input name="type" required{"" if has_exams else " disabled"}>
+<button type="submit"{"" if has_exams else " disabled"}>Guardar evaluación</button>
+{"" if has_exams else '<p class="muted">Crea al menos un examen para poder registrar una evaluación.</p>'}
+</form>
+</section>
+
+<section class="card wide"><h2>✅ Tareas registradas</h2>
+{('<p class="muted">No hay tareas registradas.</p>' if not tasks else ''.join(
+    f"<div class='session'><strong>{escape(names.get(t.subject_id,'Materia'))}</strong> · {escape(t.name)} · {t.deadline} · {t.progress}% "
+    + (f"<form method='post' action='/tasks/{t.id}/complete' style='display:inline'><button type='submit'>Marcar como completada</button></form>"
+       if t.status != 'completed' else '✅ Completada')
+    + "</div>" for t in tasks))}
+</section>
+
+<section class="card wide"><h2>Exámenes registrados</h2>
+{('<p class="muted">No hay exámenes registrados.</p>' if not exams else ''.join(
+    f"<p><strong>{escape(names.get(e.subject_id,'Materia'))}</strong> · {escape(e.name)} · {e.date} · preparación sugerida: {planner.estimate_exam_minutes(e)} min</p>"
+    for e in exams))}
+</section>
+
+<section class="card wide"><h2>Evaluaciones registradas</h2>
+{('<p class="muted">Todavía no hay notas registradas.</p>' if not evaluations else ''.join(
+    f"<p>{escape(names.get(next((e.subject_id for e in exams if e.id==v.exam_id),0),'Materia'))} · {v.grade:g}/100 · {v.date} · {escape(v.evaluation_type)}</p>"
+    for v in evaluations))}
+</section>'''
     if plan is not None:
         body += f'<section class="card wide"><h2>HOY · Plan generado</h2>{_plan_html(plan)}</section>'
-    return _page(body+'</div>')
+    body += '''<style>
+.picker-list{display:grid;gap:8px;margin:4px 0 12px}
+.picker-option,.choice-list label{display:flex;align-items:center;gap:10px;border:1px solid #d0d5dd;border-radius:10px;padding:10px;background:#fff;cursor:pointer}
+.picker-option:hover,.choice-list label:hover{border-color:#98a2b3;background:#f8fafc}
+.picker-option input,.choice-list input{margin:0}
+.picker-option span{display:flex;flex-direction:column;gap:2px}
+.picker-option small{color:#667085}
+.choice-list{display:grid;gap:7px}
+.empty-picker{padding:11px 12px;border:1px dashed #d0d5dd;border-radius:10px;color:#667085;background:#f8fafc;margin-bottom:10px}
+.saved-subjects{margin-top:10px;padding:10px 12px;border-radius:10px;background:#f8fafc;border:1px solid #eaecf0}
+</style>'''
+    return _page(body + '</div>')
+
 
 
 def _charts_dashboard():
@@ -297,6 +464,37 @@ def application(environ, start_response):
         try:
             form=_form(environ)
             if path == '/plan': return _html(start_response,_dashboard(plan=_make_plan(form)))
+            if path == '/subjects':
+                raw = _text(form, 'subjects', 'Las materias')
+                subject_names = [name.strip() for name in re.split(r'[\r\n]+', raw) if name.strip()]
+                if not subject_names:
+                    raise ValueError('Escribe al menos una materia.')
+                if len(subject_names) > 50:
+                    raise ValueError('Puedes agregar como máximo 50 materias a la vez.')
+                existing = {
+                    subject.name.casefold(): subject.name
+                    for subject in database.list_subjects(database_path=database.DATABASE_PATH)
+                }
+                added = []
+                repeated = []
+                for subject_name in subject_names:
+                    key = subject_name.casefold()
+                    if key in existing:
+                        repeated.append(existing[key])
+                        continue
+                    created = database.create_subject(
+                        subject_name,
+                        database_path=database.DATABASE_PATH,
+                    )
+                    existing[key] = created.name
+                    added.append(created.name)
+                if added and repeated:
+                    message = f"Materias guardadas: {', '.join(added)}. Ya existían: {', '.join(repeated)}."
+                elif added:
+                    message = f"Materias guardadas: {', '.join(added)}."
+                else:
+                    message = "Todas las materias que escribiste ya estaban guardadas."
+                return _html(start_response, _dashboard(message=message))
             if path == '/tasks':
                 sid=_int(form,'subject_id','La materia'); deadline=_date(form,'deadline','La fecha límite'); progress=_int(form,'progress','El progreso'); status=_text(form,'status','El estado')
                 if deadline < date.today(): raise ValueError('La fecha límite no puede estar antes de hoy.')
