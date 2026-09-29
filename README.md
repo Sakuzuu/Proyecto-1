@@ -12,7 +12,8 @@ Aplicación de Python para gestionar el estudio y analizar el rendimiento acadé
 **Punto 6 — Registro de notas y evaluaciones:** completado.  
 **Punto 7 — Promedios:** completado.  
 **Punto 8 — Generador de plan de estudio:** completado.  
-**Punto 9 — Dashboard de rendimiento:** completado.
+**Punto 9 — Dashboard de rendimiento:** completado.  
+**Punto 10 — Visualizaciones académicas:** completado.
 
 ## Punto 7 — Promedios
 
@@ -42,7 +43,8 @@ Incluye:
 - Endpoint JSON `/api/study-plan`.
 - Endpoint JSON `/api/performance`.
 - Dashboard de rendimiento con promedio general, mejor materia, menor promedio y tendencia.
-- Página de análisis detallado en `/analysis`.
+- Página de análisis detallado en `/analysis`.  
+- Página de gráficos en `/charts` con evolución de notas, promedios por materia y tiempo de estudio.
 - Endpoint de salud `/health`.
 - Diseño responsive para escritorio y móvil.
 
@@ -118,7 +120,7 @@ StudyFlow/
 - SQLite
 - WSGI + HTML/CSS
 - Tkinter (interfaz de escritorio temporal)
-- Matplotlib (fase posterior)
+- Matplotlib
 - API de IA opcional (fase posterior)
 
 ## Pruebas
