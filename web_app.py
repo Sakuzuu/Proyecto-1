@@ -466,7 +466,7 @@ def application(environ, start_response):
             if path == '/plan': return _html(start_response,_dashboard(plan=_make_plan(form)))
             if path == '/subjects':
                 raw = _text(form, 'subjects', 'Las materias')
-                subject_names = [name.strip() for name in re.split(r'[\\r\\n]+', raw) if name.strip()]
+                subject_names = [name.strip() for name in re.split(r'[\r\n]+', raw) if name.strip()]
                 if not subject_names:
                     raise ValueError('Escribe al menos una materia.')
                 if len(subject_names) > 50:
