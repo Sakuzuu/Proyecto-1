@@ -38,18 +38,30 @@ def _clean_positive_id(value: int, field_name: str) -> int:
     return value
 
 
-def _clean_target_grade(value: float) -> float:
+def _clean_number_0_100(value: float, field_name: str) -> float:
     if isinstance(value, bool):
-        raise ModelValidationError("target_grade must be a number between 0 and 100.")
+        raise ModelValidationError(f"{field_name} must be a number between 0 and 100.")
     try:
-        grade = float(value)
+        number = float(value)
     except (TypeError, ValueError) as exc:
         raise ModelValidationError(
-            "target_grade must be a number between 0 and 100."
+            f"{field_name} must be a number between 0 and 100."
         ) from exc
-    if not math.isfinite(grade) or not 0 <= grade <= 100:
-        raise ModelValidationError("target_grade must be between 0 and 100.")
-    return grade
+    if not math.isfinite(number) or not 0 <= number <= 100:
+        raise ModelValidationError(f"{field_name} must be between 0 and 100.")
+    return number
+
+
+def _clean_target_grade(value: float) -> float:
+    return _clean_number_0_100(value, "target_grade")
+
+
+def _clean_grade(value: float) -> float:
+    return _clean_number_0_100(value, "grade")
+
+
+def _clean_weight(value: float) -> float:
+    return _clean_number_0_100(value, "weight")
 
 
 def _clean_difficulty(value: int) -> int:
@@ -74,18 +86,6 @@ def _clean_date(value: date, field_name: str) -> date:
     if not isinstance(value, date):
         raise ModelValidationError(f"{field_name} must be a date.")
     return value
-
-
-def _clean_weight(value: float) -> float:
-    if isinstance(value, bool):
-        raise ModelValidationError("weight must be a number between 0 and 100.")
-    try:
-        weight = float(value)
-    except (TypeError, ValueError) as exc:
-        raise ModelValidationError("weight must be a number between 0 and 100.") from exc
-    if not math.isfinite(weight) or not 0 <= weight <= 100:
-        raise ModelValidationError("weight must be between 0 and 100.")
-    return weight
 
 
 TASK_STATUSES = ("pending", "in_progress", "completed")
@@ -158,8 +158,19 @@ class Exam:
 
 @dataclass
 class Evaluation:
+    """Recorded academic result for a scheduled exam."""
+
     id: Optional[int]
     exam_id: int
     grade: float
     date: date
     evaluation_type: str
+
+    def __post_init__(self) -> None:
+        self.id = _clean_id(self.id)
+        self.exam_id = _clean_positive_id(self.exam_id, "exam_id")
+        self.grade = _clean_grade(self.grade)
+        self.date = _clean_date(self.date, "date")
+        self.evaluation_type = _clean_required_text(
+            self.evaluation_type, "evaluation_type"
+        )

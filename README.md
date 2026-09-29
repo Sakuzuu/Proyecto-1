@@ -8,57 +8,88 @@ Aplicación de Python para gestionar el estudio y analizar el rendimiento acadé
 **Punto 2 — Sistema de materias:** completado.  
 **Punto 3 — Base de datos:** completado.  
 **Punto 4 — Sistema de tareas y actividades:** completado.  
-**Punto 5 — Sistema de exámenes:** completado.
+**Punto 5 — Sistema de exámenes:** completado.  
+**Punto 6 — Registro de notas y evaluaciones:** completado.
 
-## Sistema de exámenes
+## Punto 6 — Registro de notas
 
-Los exámenes están relacionados con una materia mediante `subject_id`.
+Los resultados se almacenan como evaluaciones separadas del examen programado.
 
-Cada examen almacena:
+Cada evaluación contiene:
 
 ```text
 id
-subject_id
-name
+exam_id
+grade
 date
-difficulty
-weight
+evaluation_type
 ```
 
 El backend permite:
 
-- Crear exámenes.
-- Consultar un examen por ID.
-- Listar exámenes.
-- Filtrar por materia.
-- Editar exámenes.
-- Eliminar exámenes.
-- Validar nombre, fecha, dificultad y peso.
-- Rechazar exámenes asociados a materias inexistentes.
+- Registrar notas.
+- Consultar una nota por ID.
+- Listar evaluaciones.
+- Filtrar evaluaciones por examen.
+- Editar notas.
+- Eliminar notas.
+- Validar nota entre 0 y 100.
+- Validar fecha, examen y tipo de evaluación.
+- Impedir evaluaciones asociadas a exámenes inexistentes.
 
-El registro de las notas de estos exámenes se mantiene separado y se implementará en el siguiente módulo para conservar una separación clara entre **examen programado** y **resultado obtenido**.
+La separación entre `exams` y `evaluations` permitirá analizar la evolución histórica sin modificar el modelo de exámenes.
 
-## Arquitectura preparada para web
+## Primera interfaz web funcional
 
-El sistema de exámenes sigue usando el mismo backend independiente de Tkinter:
+El proyecto incluye una interfaz web en `web_app.py`.
+
+No depende de Tkinter ni de paquetes externos: utiliza WSGI y la biblioteca estándar de Python.
+
+Ejecutarla localmente:
+
+```bash
+python web_app.py
+```
+
+Abrir:
+
+```text
+http://localhost:8000
+```
+
+La página permite:
+
+- Ver materias y exámenes.
+- Registrar una nota mediante formulario.
+- Ver evaluaciones registradas.
+- Consultar `/health`.
+
+### Publicación mediante enlace
+
+`web_app.py` expone una aplicación WSGI y escucha en `0.0.0.0`, usando la variable de entorno `PORT`.
+
+El proyecto queda listo para ser conectado a un servicio de hosting Python que proporcione una URL pública. La creación de esa URL requiere desplegar el repositorio en un proveedor de hosting; este commit ya incluye el punto de entrada web.
+
+## Arquitectura
 
 ```text
 Navegador
    ↓ HTTP
-Capa web / API
+web_app.py (WSGI)
    ↓
-Lógica StudyFlow
+database.py
    ↓
 SQLite
 ```
 
-No se añade lógica de interfaz al modelo ni al acceso a datos. Así, la futura interfaz web podrá consumir estas operaciones sin duplicar el código de negocio.
+La interfaz web reutiliza el mismo backend de datos que las futuras funciones del proyecto.
 
 ## Estructura
 
 ```text
 StudyFlow/
 ├── main.py
+├── web_app.py
 ├── database.py
 ├── models.py
 ├── planner.py
@@ -67,11 +98,13 @@ StudyFlow/
 ├── interface.py
 ├── charts.py
 ├── schema.sql
+├── Procfile
 ├── tests/
 │   ├── test_subjects.py
 │   ├── test_database_schema.py
 │   ├── test_tasks.py
-│   └── test_exams.py
+│   ├── test_exams.py
+│   └── test_evaluations.py
 ├── README.md
 └── data/
 ```
@@ -80,20 +113,12 @@ StudyFlow/
 
 - Python 3
 - SQLite
-- Tkinter (interfaz temporal existente)
-- Futuro frontend web sobre navegador
+- WSGI + HTML/CSS (interfaz web)
+- Tkinter (interfaz de escritorio temporal)
 - Matplotlib (fase posterior)
 - API de IA opcional (fase posterior)
 
 ## Pruebas
-
-Pruebas del sistema de exámenes:
-
-```bash
-python -m unittest discover -s tests -p "test_exams.py" -v
-```
-
-Suite general:
 
 ```bash
 python -m unittest discover -s tests -v
