@@ -1,13 +1,14 @@
 import sqlite3
 import tempfile
 import unittest
-from pathlib import Path
+from datetime import date\nfrom pathlib import Path
 
 from database import (
     DuplicateSubjectError,
     SubjectInUseError,
     SubjectNotFoundError,
     create_subject,
+    create_task,
     delete_subject,
     get_subject,
     initialize_database,
@@ -86,13 +87,17 @@ class SubjectDatabaseTests(unittest.TestCase):
 
     def test_delete_is_blocked_when_task_exists(self):
         created = create_subject("Biología", database_path=self.db_path)
-        with sqlite3.connect(self.db_path) as connection:
-            connection.execute(
-                "CREATE TABLE tasks (id INTEGER PRIMARY KEY, subject_id INTEGER NOT NULL)"
-            )
-            connection.execute(
-                "INSERT INTO tasks (subject_id) VALUES (?)", (created.id,)
-            )
+        create_task(
+            created.id,
+            "Tarea de prueba",
+            "",
+            date(2026, 10, 1),
+            5,
+            30,
+            0,
+            "pending",
+            self.db_path,
+        )
         with self.assertRaises(SubjectInUseError):
             delete_subject(created.id, self.db_path)
 
