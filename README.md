@@ -7,50 +7,40 @@ Aplicación de Python para gestionar el estudio y analizar el rendimiento acadé
 **Punto 1 — Estructura general:** completado.  
 **Punto 2 — Sistema de materias:** completado.  
 **Punto 3 — Base de datos:** completado.  
-**Punto 4 — Sistema de tareas y actividades:** completado.
+**Punto 4 — Sistema de tareas y actividades:** completado.  
+**Punto 5 — Sistema de exámenes:** completado.
 
-## Sistema de tareas
+## Sistema de exámenes
 
-Las tareas están relacionadas con una materia mediante `subject_id`.
+Los exámenes están relacionados con una materia mediante `subject_id`.
 
-Cada tarea almacena:
+Cada examen almacena:
 
 ```text
 id
 subject_id
 name
-description
-deadline
+date
 difficulty
-estimated_minutes
-progress
-status
+weight
 ```
-
-Estados válidos:
-
-- `pending`
-- `in_progress`
-- `completed`
-
-El modelo valida los campos antes de enviarlos a SQLite y la base de datos mantiene las restricciones como segunda línea de defensa.
 
 El backend permite:
 
-- Crear tareas.
-- Consultar tareas por ID.
-- Listar tareas.
+- Crear exámenes.
+- Consultar un examen por ID.
+- Listar exámenes.
 - Filtrar por materia.
-- Filtrar por estado.
-- Editar tareas.
-- Eliminar tareas.
-- Rechazar tareas asociadas a materias inexistentes.
+- Editar exámenes.
+- Eliminar exámenes.
+- Validar nombre, fecha, dificultad y peso.
+- Rechazar exámenes asociados a materias inexistentes.
+
+El registro de las notas de estos exámenes se mantiene separado y se implementará en el siguiente módulo para conservar una separación clara entre **examen programado** y **resultado obtenido**.
 
 ## Arquitectura preparada para web
 
-La lógica de tareas y la persistencia siguen sin depender de Tkinter. Esto permite que más adelante una capa HTTP/REST exponga estas operaciones a una interfaz web.
-
-La idea será:
+El sistema de exámenes sigue usando el mismo backend independiente de Tkinter:
 
 ```text
 Navegador
@@ -62,7 +52,7 @@ Lógica StudyFlow
 SQLite
 ```
 
-La aplicación de escritorio actual queda como interfaz temporal; no será necesario duplicar la lógica de negocio para la versión web.
+No se añade lógica de interfaz al modelo ni al acceso a datos. Así, la futura interfaz web podrá consumir estas operaciones sin duplicar el código de negocio.
 
 ## Estructura
 
@@ -80,7 +70,8 @@ StudyFlow/
 ├── tests/
 │   ├── test_subjects.py
 │   ├── test_database_schema.py
-│   └── test_tasks.py
+│   ├── test_tasks.py
+│   └── test_exams.py
 ├── README.md
 └── data/
 ```
@@ -96,10 +87,10 @@ StudyFlow/
 
 ## Pruebas
 
-Pruebas del sistema de tareas:
+Pruebas del sistema de exámenes:
 
 ```bash
-python -m unittest discover -s tests -p "test_tasks.py" -v
+python -m unittest discover -s tests -p "test_exams.py" -v
 ```
 
 Suite general:

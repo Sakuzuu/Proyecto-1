@@ -8,7 +8,7 @@ from pathlib import Path
 import sqlite3
 from typing import Optional, Union
 
-from models import Subject, Task
+from models import Subject, Task, Exam
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
@@ -36,6 +36,10 @@ class SubjectInUseError(DatabaseError):
 
 class TaskNotFoundError(DatabaseError):
     """Raised when a requested task does not exist."""
+
+
+class ExamNotFoundError(DatabaseError):
+    """Raised when a requested exam does not exist."""
 
 
 def get_connection(database_path: DatabasePath = DATABASE_PATH) -> sqlite3.Connection:
@@ -91,6 +95,17 @@ def _row_to_task(row: sqlite3.Row) -> Task:
         estimated_minutes=int(row["estimated_minutes"]),
         progress=int(row["progress"]),
         status=row["status"],
+    )
+
+
+def _row_to_exam(row: sqlite3.Row) -> Exam:
+    return Exam(
+        id=int(row["id"]),
+        subject_id=int(row["subject_id"]),
+        name=row["name"],
+        date=date.fromisoformat(row["date"]),
+        difficulty=int(row["difficulty"]),
+        weight=float(row["weight"]),
     )
 
 
@@ -430,4 +445,165 @@ def delete_task(task_id: int, database_path: DatabasePath = DATABASE_PATH) -> No
         cursor = connection.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
         if cursor.rowcount == 0:
             raise TaskNotFoundError(f"Task with id {task_id} was not found.")
+        connection.commit()
+
+
+def create_exam(
+    subject_id: int,
+    name: str,
+    exam_date: date,
+    difficulty: int,
+    weight: float,
+    database_path: DatabasePath = DATABASE_PATH,
+) -> Exam:
+    """Create and return a scheduled exam for an existing subject."""
+    exam = Exam(
+        id=None,
+        subject_id=subject_id,
+        name=name,
+        date=exam_date,
+        difficulty=difficulty,
+        weight=weight,
+    )
+    _ensure_initialized(database_path)
+    try:
+        with get_connection(database_path) as connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO exams (subject_id, name, date, difficulty, weight)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    exam.subject_id,
+                    exam.name,
+                    exam.date.isoformat(),
+                    exam.difficulty,
+                    exam.weight,
+                ),
+            )
+            connection.commit()
+            exam.id = int(cursor.lastrowid)
+            return exam
+    except sqlite3.IntegrityError as exc:
+        if "FOREIGN KEY constraint failed" in str(exc):
+            raise SubjectNotFoundError(
+                f"Subject with id {exam.subject_id} was not found."
+            ) from exc
+        raise DatabaseError("Could not create the exam.") from exc
+
+
+def get_exam(exam_id: int, database_path: DatabasePath = DATABASE_PATH) -> Exam:
+    """Return one exam by ID."""
+    if isinstance(exam_id, bool) or not isinstance(exam_id, int) or exam_id <= 0:
+        raise ValueError("exam_id must be a positive integer.")
+    _ensure_initialized(database_path)
+    with get_connection(database_path) as connection:
+        row = connection.execute(
+            """
+            SELECT id, subject_id, name, date, difficulty, weight
+            FROM exams
+            WHERE id = ?
+            """,
+            (exam_id,),
+        ).fetchone()
+    if row is None:
+        raise ExamNotFoundError(f"Exam with id {exam_id} was not found.")
+    return _row_to_exam(row)
+
+
+def list_exams(
+    subject_id: Optional[int] = None,
+    database_path: DatabasePath = DATABASE_PATH,
+) -> list[Exam]:
+    """Return exams ordered by date, optionally filtered by subject."""
+    if subject_id is not None and (
+        isinstance(subject_id, bool) or not isinstance(subject_id, int) or subject_id <= 0
+    ):
+        raise ValueError("subject_id must be a positive integer or None.")
+
+    _ensure_initialized(database_path)
+    if subject_id is None:
+        query = """
+            SELECT id, subject_id, name, date, difficulty, weight
+            FROM exams
+            ORDER BY date ASC, id ASC
+        """
+        parameters: tuple[object, ...] = ()
+    else:
+        query = """
+            SELECT id, subject_id, name, date, difficulty, weight
+            FROM exams
+            WHERE subject_id = ?
+            ORDER BY date ASC, id ASC
+        """
+        parameters = (subject_id,)
+
+    with get_connection(database_path) as connection:
+        rows = connection.execute(query, parameters).fetchall()
+    return [_row_to_exam(row) for row in rows]
+
+
+def update_exam(
+    exam_id: int,
+    subject_id: int,
+    name: str,
+    exam_date: date,
+    difficulty: int,
+    weight: float,
+    database_path: DatabasePath = DATABASE_PATH,
+) -> Exam:
+    """Update and return an exam, validating all new values."""
+    if isinstance(exam_id, bool) or not isinstance(exam_id, int) or exam_id <= 0:
+        raise ValueError("exam_id must be a positive integer.")
+    exam = Exam(
+        id=exam_id,
+        subject_id=subject_id,
+        name=name,
+        date=exam_date,
+        difficulty=difficulty,
+        weight=weight,
+    )
+    _ensure_initialized(database_path)
+    try:
+        with get_connection(database_path) as connection:
+            cursor = connection.execute(
+                """
+                UPDATE exams
+                SET subject_id = ?, name = ?, date = ?, difficulty = ?, weight = ?
+                WHERE id = ?
+                """,
+                (
+                    exam.subject_id,
+                    exam.name,
+                    exam.date.isoformat(),
+                    exam.difficulty,
+                    exam.weight,
+                    exam_id,
+                ),
+            )
+            if cursor.rowcount == 0:
+                raise ExamNotFoundError(f"Exam with id {exam_id} was not found.")
+            connection.commit()
+    except sqlite3.IntegrityError as exc:
+        if "FOREIGN KEY constraint failed" in str(exc):
+            raise SubjectNotFoundError(
+                f"Subject with id {exam.subject_id} was not found."
+            ) from exc
+        raise DatabaseError("Could not update the exam.") from exc
+    return exam
+
+
+def delete_exam(exam_id: int, database_path: DatabasePath = DATABASE_PATH) -> None:
+    """Delete an exam by ID.
+
+    The schema cascades deletion to evaluations, which will be used by the
+    evaluation module in the following milestone.
+    """
+    if isinstance(exam_id, bool) or not isinstance(exam_id, int) or exam_id <= 0:
+        raise ValueError("exam_id must be a positive integer.")
+    _ensure_initialized(database_path)
+    with get_connection(database_path) as connection:
+        cursor = connection.execute("DELETE FROM exams WHERE id = ?", (exam_id,))
+        if cursor.rowcount == 0:
+            raise ExamNotFoundError(f"Exam with id {exam_id} was not found.")
         connection.commit()

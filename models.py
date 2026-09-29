@@ -76,6 +76,18 @@ def _clean_date(value: date, field_name: str) -> date:
     return value
 
 
+def _clean_weight(value: float) -> float:
+    if isinstance(value, bool):
+        raise ModelValidationError("weight must be a number between 0 and 100.")
+    try:
+        weight = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ModelValidationError("weight must be a number between 0 and 100.") from exc
+    if not math.isfinite(weight) or not 0 <= weight <= 100:
+        raise ModelValidationError("weight must be between 0 and 100.")
+    return weight
+
+
 TASK_STATUSES = ("pending", "in_progress", "completed")
 
 
@@ -126,12 +138,22 @@ class Task:
 
 @dataclass
 class Exam:
+    """Scheduled exam associated with a subject."""
+
     id: Optional[int]
     subject_id: int
     name: str
     date: date
     difficulty: int
     weight: float
+
+    def __post_init__(self) -> None:
+        self.id = _clean_id(self.id)
+        self.subject_id = _clean_positive_id(self.subject_id, "subject_id")
+        self.name = _clean_required_text(self.name, "name")
+        self.date = _clean_date(self.date, "date")
+        self.difficulty = _clean_difficulty(self.difficulty)
+        self.weight = _clean_weight(self.weight)
 
 
 @dataclass
