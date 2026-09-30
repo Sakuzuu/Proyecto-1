@@ -73,7 +73,7 @@ const STUDYFLOW_TRANSLATIONS={{
     "section.home":"1. Home","section.home.desc":"Your academic summary, performance and activity record.",
     "summary.title":"📊 Summary","summary.average":"Current average","summary.tasks":"tasks","summary.exams":"exams","summary.evaluations":"evaluations",
     "priorities.title":"🎯 Current priorities","priorities.desc":"Pending items ordered by priority.",
-    "registered.tasks":"✅ Registered tasks","empty.tasks":"No tasks registered.","registered.exams":"📝 Registered exams","empty.exams":"No evaluations? No exams registered.","registered.evaluations":"📒 Registered evaluations","empty.evaluations":"No grades registered yet.",
+    "registered.tasks":"✅ Registered tasks","empty.tasks":"No tasks registered.","registered.exams":"📝 Registered exams","empty.exams":"No exams registered.","registered.evaluations":"📒 Registered evaluations","empty.evaluations":"No grades registered yet.",
     "status.completed":"Completed",
     "section.add":"2. Add","section.add.desc":"Register subjects, tasks, exams and evaluations.",
     "subjects.title":"📚 Add subjects","subjects.desc":"Write your subjects, one per line. They will be saved and available for your activities.","subjects.label":"Subjects","subjects.save":"Save subjects","subjects.saved":"Saved subjects:","subjects.empty":"No subjects saved yet.","subjects.manage":"Manage subjects","subjects.delete":"Delete subject",
