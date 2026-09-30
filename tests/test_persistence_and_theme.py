@@ -114,16 +114,19 @@ class PersistenceAndThemeTests(unittest.TestCase):
         status, headers, body = self.request("/")
         self.assertEqual(status, "200 OK")
         self.assertEqual(headers["Content-Type"], "text/html; charset=utf-8")
-        self.assertIn('dataset.theme=saved||"dark"', body)
+        self.assertIn('root.dataset.theme=localStorage.getItem("studyflow-theme")||"dark"', body)
         self.assertIn(':root[data-theme="dark"]', body)
-        self.assertIn('localStorage.setItem("studyflow-theme",next)', body)
-        self.assertIn('id="theme-toggle"', body)
-        self.assertIn("Cambiar tema", body)
+        self.assertIn('studyFlowSave("studyflow-theme",document.documentElement.dataset.theme)', body)
+        self.assertIn('name="setting-theme"', body)
+        self.assertIn('name="setting-language"', body)
+        self.assertIn('name="setting-density"', body)
+        self.assertNotIn("<select", body.lower())
 
     def test_dark_theme_is_present_on_analysis_page(self):
         status, _, body = self.request("/")
         self.assertEqual(status, "200 OK")
-        self.assertIn("Cambiar tema", body)
+        self.assertIn("Configuración", body)
+        self.assertIn(":root[data-theme=\"dark\"]", body)
 
 
 if __name__ == "__main__":

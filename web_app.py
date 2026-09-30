@@ -18,12 +18,121 @@ LOGGER = logging.getLogger("studyflow.web")
 
 
 def _page(body, title="StudyFlow"):
-    return f'''<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(title)}</title><script>(function(){{try{{const saved=localStorage.getItem("studyflow-theme");document.documentElement.dataset.theme=saved||"dark";}}catch(_ ){{document.documentElement.dataset.theme="dark";}}}})();</script><style>
+    return f'''<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(title)}</title>
+<script>(function(){{try{{const root=document.documentElement;root.dataset.theme=localStorage.getItem("studyflow-theme")||"dark";root.dataset.language=localStorage.getItem("studyflow-language")||"es";root.dataset.density=localStorage.getItem("studyflow-density")||"comfortable";root.dataset.reducedMotion=localStorage.getItem("studyflow-reduced-motion")==="true"?"true":"false";}}catch(_ ){{document.documentElement.dataset.theme="dark";document.documentElement.dataset.language="es";document.documentElement.dataset.density="comfortable";document.documentElement.dataset.reducedMotion="false";}}}})();</script>
+<style>
 :root{{--bg:#f4f6fb;--text:#182230;--surface:#fff;--border:#e4e7ec;--muted:#667085;--input:#fff;--input-border:#d0d5dd;--row-border:#eaecf0;--soft:#f8fafc;--button:#182230;--button-text:#fff;--notice-bg:#ecfdf3;--notice-text:#067647;--error-bg:#fef3f2;--error-text:#b42318;--warning-bg:#fffaeb;--warning-text:#b54708;--badge:#f2f4f7;--code:#f2f4f7;--chart:#fff}}
 :root[data-theme="dark"]{{--bg:#0b1220;--text:#edf2f7;--surface:#121a2b;--border:#2a3446;--muted:#9aa6b2;--input:#0f1726;--input-border:#344054;--row-border:#263247;--soft:#172033;--button:#e6edf5;--button-text:#0b1220;--notice-bg:#10352a;--notice-text:#9ae6c5;--error-bg:#3a1717;--error-text:#ffb4b4;--warning-bg:#3a2a0f;--warning-text:#ffd58a;--badge:#23304a;--code:#202b40;--chart:#121a2b}}
-*{{box-sizing:border-box}}html{{background:var(--bg);color-scheme:dark}}html[data-theme="light"]{{color-scheme:light}}body{{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,sans-serif;transition:background .2s,color .2s}}main{{max-width:1100px;margin:auto;padding:24px 16px}}h1{{margin:0}}h2{{margin-bottom:10px}}.grid{{display:grid;grid-template-columns:1fr 1fr;gap:16px}}.card{{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px}}.wide{{grid-column:1/-1}}.metric{{font-size:30px;font-weight:800}}.muted{{color:var(--muted)}}form{{display:grid;gap:7px}}input,select,textarea,button{{padding:9px;border:1px solid var(--input-border);border-radius:8px;font:inherit}}input,select,textarea{{background:var(--input);color:var(--text)}}button{{background:var(--button);color:var(--button-text);cursor:pointer}}button:disabled{{opacity:.55;cursor:not-allowed}}table{{width:100%;border-collapse:collapse}}th,td{{padding:8px;text-align:left;border-bottom:1px solid var(--row-border)}}th{{color:var(--muted)}}.badge{{display:inline-block;padding:3px 7px;border-radius:999px;background:var(--badge);font-size:12px}}.red{{background:var(--error-bg);color:var(--error-text)}}.orange{{background:var(--warning-bg);color:var(--warning-text)}}.green{{background:var(--notice-bg);color:var(--notice-text)}}.notice,.error,.warning{{padding:10px 12px;border-radius:8px;margin-bottom:12px}}.notice{{background:var(--notice-bg);color:var(--notice-text)}}.error{{background:var(--error-bg);color:var(--error-text)}}.warning{{background:var(--warning-bg);color:var(--warning-text)}}.session{{border:1px solid var(--border);border-radius:10px;padding:10px;margin:8px 0}}.session-time{{font-size:17px;font-weight:800}}.metric-grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}}.metric-box{{background:var(--soft);border:1px solid var(--row-border);border-radius:10px;padding:12px}}.metric-small{{font-size:18px;margin-top:4px}}.table-wrap{{overflow-x:auto}}.chart{{display:block;width:100%;height:auto;border:1px solid var(--row-border);border-radius:10px;background:var(--chart)}}.theme-bar{{display:flex;justify-content:flex-end;margin:0 0 12px}}.theme-toggle{{border:1px solid var(--input-border);background:var(--surface);color:var(--text)}}.picker-option,.choice-list label{{background:var(--surface)!important;color:var(--text)}}.empty-picker{{border-color:var(--input-border)!important;background:var(--soft)!important;color:var(--muted)!important}}.saved-subjects{{background:var(--soft)!important;border-color:var(--row-border)!important}}code{{background:var(--code);color:var(--text)}}@media(max-width:900px){{.metric-grid{{grid-template-columns:1fr 1fr}}}}@media(max-width:800px){{.grid{{grid-template-columns:1fr}}.wide{{grid-column:auto}}}}
-</style></head><body><main><div class="theme-bar"><button class="theme-toggle" type="button" id="theme-toggle" onclick="toggleStudyFlowTheme()">☀️/🌙 Cambiar tema</button></div>{body}<p class="muted">StudyFlow · Planificador académico integrado</p></main><script>function toggleStudyFlowTheme(){{const root=document.documentElement;const next=root.dataset.theme==="dark"?"light":"dark";root.dataset.theme=next;try{{localStorage.setItem("studyflow-theme",next);}}catch(_ ){{}}}};</script></body></html>'''
-
+*{{box-sizing:border-box}}html{{background:var(--bg);color-scheme:dark;scroll-behavior:smooth}}html[data-theme="light"]{{color-scheme:light}}body{{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,sans-serif;transition:background .2s,color .2s}}main{{max-width:1160px;margin:auto;padding:18px 16px 32px}}header{{padding:18px 0 8px}}h1{{margin:0}}h2{{margin:0 0 10px}}h3{{margin-top:8px}}.muted{{color:var(--muted)}}.grid{{display:grid;grid-template-columns:1fr 1fr;gap:16px}}.card{{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px}}.wide{{grid-column:1/-1}}.metric{{font-size:30px;font-weight:800}}.metric-grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}}.metric-box{{background:var(--soft);border:1px solid var(--row-border);border-radius:10px;padding:12px}}.metric-small{{font-size:18px;margin-top:4px}}form{{display:grid;gap:7px}}input,select,textarea,button{{padding:9px;border:1px solid var(--input-border);border-radius:8px;font:inherit}}input,select,textarea{{background:var(--input);color:var(--text)}}button{{background:var(--button);color:var(--button-text);cursor:pointer}}button:disabled{{opacity:.55;cursor:not-allowed}}table{{width:100%;border-collapse:collapse}}th,td{{padding:8px;text-align:left;border-bottom:1px solid var(--row-border)}}th{{color:var(--muted)}}.badge{{display:inline-block;padding:3px 7px;border-radius:999px;background:var(--badge);font-size:12px}}.red{{background:var(--error-bg);color:var(--error-text)}}.orange{{background:var(--warning-bg);color:var(--warning-text)}}.green{{background:var(--notice-bg);color:var(--notice-text)}}.notice,.error,.warning{{padding:10px 12px;border-radius:8px;margin-bottom:12px}}.notice{{background:var(--notice-bg);color:var(--notice-text)}}.error{{background:var(--error-bg);color:var(--error-text)}}.warning{{background:var(--warning-bg);color:var(--warning-text)}}.session{{border:1px solid var(--border);border-radius:10px;padding:10px;margin:8px 0}}.session-time{{font-size:17px;font-weight:800}}.table-wrap{{overflow-x:auto}}.chart{{display:block;width:100%;height:auto;border:1px solid var(--row-border);border-radius:10px;background:var(--chart)}}.topbar{{position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px)}}.nav{{display:flex;gap:7px;flex-wrap:wrap}}.nav a,.settings-summary{{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);text-decoration:none;cursor:pointer}}.nav a:hover,.settings-summary:hover{{border-color:var(--input-border)}}.settings-panel{{margin:12px 0 18px;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}}.settings-panel summary{{list-style:none}}.settings-panel summary::-webkit-details-marker{{display:none}}.settings-body{{padding:14px;border-top:1px solid var(--row-border)}}.settings-grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}}.setting{{display:grid;gap:6px}}.setting-label{{font-weight:700}}.settings-options{{display:grid;grid-template-columns:1fr 1fr;gap:8px}}.settings-choice{{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--border);border-radius:9px;background:var(--soft);cursor:pointer}}.settings-choice:has(input:checked){{border-color:var(--input-border);box-shadow:inset 0 0 0 1px var(--input-border)}}.settings-choice input{{margin:0}}.setting-inline{{display:flex;align-items:center;gap:8px;min-height:38px}}.setting-actions{{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}}.section-nav-title{{margin:4px 0 4px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}}.section-heading{{scroll-margin-top:86px;padding-top:8px;margin:22px 0 10px}}.section-heading h2{{font-size:25px;margin:0}}.section-description{{margin:0 0 14px;color:var(--muted)}}.picker-list{{display:grid;gap:8px;margin:4px 0 12px}}.picker-option,.choice-list label{{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:10px;background:var(--surface);color:var(--text);cursor:pointer}}.picker-option:hover,.choice-list label:hover{{border-color:var(--input-border);background:var(--soft)}}.picker-option input,.choice-list input{{margin:0}}.picker-option span{{display:flex;flex-direction:column;gap:2px}}.picker-option small{{color:var(--muted)}}.choice-list{{display:grid;gap:7px}}.empty-picker{{padding:11px 12px;border:1px dashed var(--input-border);border-radius:10px;color:var(--muted);background:var(--soft);margin-bottom:10px}}.saved-subjects{{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--soft);border:1px solid var(--row-border)}}code{{background:var(--code);color:var(--text);padding:2px 5px;border-radius:5px}}.compact,.compact *{{}}:root[data-density="compact"] .card{{padding:12px}}:root[data-density="compact"] .grid{{gap:10px}}:root[data-density="compact"] .metric-grid{{gap:7px}}:root[data-reduced-motion="true"] *, :root[data-reduced-motion="true"] *::before, :root[data-reduced-motion="true"] *::after{{transition:none!important;animation:none!important;scroll-behavior:auto!important}}@media(max-width:900px){{.metric-grid,.settings-grid{{grid-template-columns:1fr 1fr}}}}@media(max-width:800px){{.grid{{grid-template-columns:1fr}}.wide{{grid-column:auto}}.settings-grid{{grid-template-columns:1fr}}.topbar{{position:static}}}}
+</style></head><body><main>
+<div class="topbar"><nav class="nav" aria-label="Navegación principal"><a href="/#inicio" data-i18n="nav.home">Inicio</a><a href="/#agregar" data-i18n="nav.add">Agregar</a><a href="/#graficos-plan" data-i18n="nav.analytics">Gráficos y plan</a><a href="#configuracion" data-i18n="nav.settings">⚙️ Configuración</a></nav><div class="section-nav-title" data-i18n="nav.studyflow">StudyFlow</div></div>
+<details class="settings-panel" id="configuracion"><summary class="settings-summary" data-i18n="nav.settings">⚙️ Configuración</summary><div class="settings-body">
+<div class="settings-grid">
+<div class="setting"><span class="setting-label" data-i18n="settings.theme">Tema</span><div class="settings-options">
+<label class="settings-choice"><input type="radio" name="setting-theme" value="dark"><span data-i18n="settings.dark">Oscuro</span></label>
+<label class="settings-choice"><input type="radio" name="setting-theme" value="light"><span data-i18n="settings.light">Claro</span></label>
+</div></div>
+<div class="setting"><span class="setting-label" data-i18n="settings.language">Idioma</span><div class="settings-options">
+<label class="settings-choice"><input type="radio" name="setting-language" value="es"><span data-i18n="settings.spanish">Español</span></label>
+<label class="settings-choice"><input type="radio" name="setting-language" value="en"><span data-i18n="settings.english">English</span></label>
+</div></div>
+<div class="setting"><span class="setting-label" data-i18n="settings.density">Densidad de interfaz</span><div class="settings-options">
+<label class="settings-choice"><input type="radio" name="setting-density" value="comfortable"><span data-i18n="settings.comfortable">Cómoda</span></label>
+<label class="settings-choice"><input type="radio" name="setting-density" value="compact"><span data-i18n="settings.compact">Compacta</span></label>
+</div></div>
+<div class="setting"><label for="setting-motion" data-i18n="settings.motion">Reducir animaciones</label><label class="setting-inline"><input id="setting-motion" type="checkbox"><span data-i18n="settings.motion.help">Desactivar transiciones y desplazamiento suave</span></label></div>
+<div class="setting"><label data-i18n="settings.storage">Guardado</label><div class="setting-inline"><span class="badge green" data-i18n="settings.autosave">Guardado automático activado</span></div></div>
+</div>
+<div class="setting-actions"><button type="button" id="reset-settings" data-i18n="settings.reset">Restablecer preferencias</button></div>
+</div></details>
+{body}<p class="muted" data-i18n="footer">StudyFlow · Planificador académico integrado</p>
+</main><script>
+const STUDYFLOW_TRANSLATIONS={{
+  es: {{
+    "nav.home":"Inicio","nav.add":"Agregar","nav.analytics":"Gráficos y plan","nav.settings":"⚙️ Configuración","nav.studyflow":"StudyFlow",
+    "settings.theme":"Tema","settings.dark":"Oscuro","settings.light":"Claro","settings.language":"Idioma","settings.spanish":"Español","settings.english":"English","settings.density":"Densidad de interfaz","settings.comfortable":"Cómoda","settings.compact":"Compacta","settings.motion":"Reducir animaciones","settings.motion.help":"Desactivar transiciones y desplazamiento suave","settings.storage":"Guardado","settings.autosave":"Guardado automático activado","settings.reset":"Restablecer preferencias",
+    "section.home":"1. Inicio","section.home.desc":"Tu resumen académico, rendimiento y registro de actividades.",
+    "summary.title":"📊 Resumen","summary.average":"Promedio actual","summary.tasks":"tareas","summary.exams":"exámenes","summary.evaluations":"evaluaciones",
+    "priorities.title":"🎯 Prioridades actuales","priorities.desc":"Elementos pendientes ordenados por prioridad.",
+    "registered.tasks":"✅ Tareas registradas","empty.tasks":"No hay tareas registradas.","registered.exams":"📝 Exámenes registrados","empty.exams":"No hay exámenes registrados.","registered.evaluations":"📒 Evaluaciones registradas","empty.evaluations":"Todavía no hay notas registradas.",
+    "status.completed":"Completada",
+    "section.add":"2. Agregar","section.add.desc":"Registra materias, tareas, exámenes y evaluaciones.",
+    "subjects.title":"📚 Agregar materias","subjects.desc":"Escribe tus materias, una por línea. Se guardarán y estarán disponibles para tus actividades.","subjects.label":"Materias","subjects.save":"Guardar materias","subjects.saved":"Materias guardadas:","subjects.empty":"Todavía no hay materias guardadas.","subjects.manage":"Gestionar materias","subjects.delete":"Eliminar materia",
+    "tasks.add.title":"📘 Nueva tarea","tasks.add.desc":"Completa los datos de la actividad y guárdala en tu planificador.","form.subject":"Materia","form.name":"Nombre","form.description":"Descripción","form.deadline":"Fecha límite","form.difficulty":"Dificultad (1–10)","form.minutes":"Tiempo estimado (min)","form.progress":"Progreso","form.status":"Estado","status.pending":"Pendiente","status.progress":"En progreso","tasks.save":"Guardar tarea","tasks.need.subject":"Agrega al menos una materia para poder guardar tareas.",
+    "exams.add.title":"📝 Nuevo examen","exams.add.desc":"Registra una fecha, dificultad y peso para calcular prioridades.","form.exam.date":"Fecha del examen","form.weight":"Peso (%)","exams.save":"Guardar examen","exams.need.subject":"Agrega al menos una materia para poder guardar exámenes.",
+    "evaluations.add.title":"📒 Registrar evaluación","evaluations.add.desc":"Relaciona una nota con uno de tus exámenes.","form.exam":"Examen","form.grade":"Nota (0–100)","form.date":"Fecha","form.type":"Tipo de evaluación","evaluations.save":"Guardar evaluación","evaluations.need.exam":"Crea al menos un examen para poder registrar una evaluación.",
+    "section.analytics":"3. Gráficos y plan de estudio","section.analytics.desc":"Consulta tus visualizaciones y genera el plan de estudio diario.",
+    "charts.title":"📈 Gráficos académicos","charts.desc":"Las visualizaciones se actualizan con tus datos registrados.","charts.evolution":"Evolución de notas","charts.subjects":"Promedio por materia","charts.time":"Tiempo de estudio estimado",
+    "plan.title":"📅 Plan de estudio","plan.desc":"Distribuye el tiempo entre tareas y exámenes según prioridad, dificultad, tiempo y fecha límite.","plan.hours":"Horas disponibles hoy","plan.start":"Hora de inicio","plan.generate":"Generar plan de hoy","plan.rule":"Máximo 80 min por sesión y 15 min de descanso.",
+    "analysis.title":"🔎 Análisis detallado","analysis.desc":"Revisa fortalezas, rendimiento normal, atención y tendencias con umbrales configurables.","analysis.open":"Abrir análisis detallado","brand.subtitle":"Planificación y análisis académico","plan.generated":"HOY · Plan generado",
+    "footer":"StudyFlow · Planificador académico integrado"
+  }},
+  en: {{
+    "nav.home":"Home","nav.add":"Add","nav.analytics":"Charts & plan","nav.settings":"⚙️ Settings","nav.studyflow":"StudyFlow",
+    "settings.theme":"Theme","settings.dark":"Dark","settings.light":"Light","settings.language":"Language","settings.spanish":"Spanish","settings.english":"English","settings.density":"Interface density","settings.comfortable":"Comfortable","settings.compact":"Compact","settings.motion":"Reduce animations","settings.motion.help":"Disable transitions and smooth scrolling","settings.storage":"Saving","settings.autosave":"Automatic saving enabled","settings.reset":"Reset preferences",
+    "section.home":"1. Home","section.home.desc":"Your academic summary, performance and activity record.",
+    "summary.title":"📊 Summary","summary.average":"Current average","summary.tasks":"tasks","summary.exams":"exams","summary.evaluations":"evaluations",
+    "priorities.title":"🎯 Current priorities","priorities.desc":"Pending items ordered by priority.",
+    "registered.tasks":"✅ Registered tasks","empty.tasks":"No tasks registered.","registered.exams":"📝 Registered exams","empty.exams":"No exams registered.","registered.evaluations":"📒 Registered evaluations","empty.evaluations":"No grades registered yet.",
+    "status.completed":"Completed",
+    "section.add":"2. Add","section.add.desc":"Register subjects, tasks, exams and evaluations.",
+    "subjects.title":"📚 Add subjects","subjects.desc":"Write your subjects, one per line. They will be saved and available for your activities.","subjects.label":"Subjects","subjects.save":"Save subjects","subjects.saved":"Saved subjects:","subjects.empty":"No subjects saved yet.","subjects.manage":"Manage subjects","subjects.delete":"Delete subject",
+    "tasks.add.title":"📘 New task","tasks.add.desc":"Complete the activity details and save it to your planner.","form.subject":"Subject","form.name":"Name","form.description":"Description","form.deadline":"Deadline","form.difficulty":"Difficulty (1–10)","form.minutes":"Estimated time (min)","form.progress":"Progress","form.status":"Status","status.pending":"Pending","status.progress":"In progress","tasks.save":"Save task","tasks.need.subject":"Add at least one subject before saving tasks.",
+    "exams.add.title":"📝 New exam","exams.add.desc":"Register a date, difficulty and weight to calculate priorities.","form.exam.date":"Exam date","form.weight":"Weight (%)","exams.save":"Save exam","exams.need.subject":"Add at least one subject before saving exams.",
+    "evaluations.add.title":"📒 Register evaluation","evaluations.add.desc":"Link a grade to one of your exams.","form.exam":"Exam","form.grade":"Grade (0–100)","form.date":"Date","form.type":"Evaluation type","evaluations.save":"Save evaluation","evaluations.need.exam":"Create at least one exam before registering an evaluation.",
+    "section.analytics":"3. Charts and study plan","section.analytics.desc":"View your visualizations and generate the daily study plan.",
+    "charts.title":"📈 Academic charts","charts.desc":"Visualizations update from your registered data.","charts.evolution":"Grade evolution","charts.subjects":"Average by subject","charts.time":"Estimated study time",
+    "plan.title":"📅 Study plan","plan.desc":"Distribute time across tasks and exams using priority, difficulty, time and deadlines.","plan.hours":"Available hours today","plan.start":"Start time","plan.generate":"Generate today's plan","plan.rule":"Maximum 80 min per session and 15 min of break.",
+    "analysis.title":"🔎 Detailed analysis","analysis.desc":"Review strengths, normal performance, attention and trends with configurable thresholds.","analysis.open":"Open detailed analysis","brand.subtitle":"Academic planning and analysis","plan.generated":"TODAY · Generated plan",
+    "footer":"StudyFlow · Integrated academic planner"
+  }}
+}};
+function studyFlowSetRadio(name,value){{
+  document.querySelectorAll('input[name="'+name+'"]').forEach((input)=>{{input.checked=input.value===value;}});
+}}
+function studyFlowApplyLanguage(language){{
+  const lang=language==="en"?"en":"es";
+  document.documentElement.dataset.language=lang;
+  document.documentElement.lang=lang;
+  document.querySelectorAll("[data-i18n]").forEach((el)=>{{
+    const value=STUDYFLOW_TRANSLATIONS[lang][el.dataset.i18n];
+    if(value!==undefined) el.textContent=value;
+  }});
+  studyFlowSetRadio("setting-language",lang);
+}}
+function studyFlowApplyTheme(theme){{
+  const value=theme==="light"?"light":"dark";
+  document.documentElement.dataset.theme=value;
+  studyFlowSetRadio("setting-theme",value);
+}}
+function studyFlowApplyDensity(density){{
+  const value=density==="compact"?"compact":"comfortable";
+  document.documentElement.dataset.density=value;
+  studyFlowSetRadio("setting-density",value);
+}}
+function studyFlowApplyMotion(reduced){{
+  const value=Boolean(reduced);
+  document.documentElement.dataset.reducedMotion=value?"true":"false";
+  const checkbox=document.getElementById("setting-motion");
+  if(checkbox) checkbox.checked=value;
+}}
+function studyFlowSave(key,value){{try{{localStorage.setItem(key,value);}}catch(_ ){{}}}}
+function studyFlowResetSettings(){{
+  try{{["studyflow-theme","studyflow-language","studyflow-density","studyflow-reduced-motion"].forEach((key)=>localStorage.removeItem(key));}}catch(_ ){{}}
+  studyFlowApplyTheme("dark");studyFlowApplyLanguage("es");studyFlowApplyDensity("comfortable");studyFlowApplyMotion(false);
+}}
+document.addEventListener("DOMContentLoaded",()=>{{
+  studyFlowApplyTheme(document.documentElement.dataset.theme);
+  studyFlowApplyLanguage(document.documentElement.dataset.language);
+  studyFlowApplyDensity(document.documentElement.dataset.density);
+  studyFlowApplyMotion(document.documentElement.dataset.reducedMotion==="true");
+  document.querySelectorAll('input[name="setting-theme"]').forEach((input)=>input.addEventListener("change",(event)=>{{studyFlowApplyTheme(event.target.value);studyFlowSave("studyflow-theme",document.documentElement.dataset.theme);}}));
+  document.querySelectorAll('input[name="setting-language"]').forEach((input)=>input.addEventListener("change",(event)=>{{studyFlowApplyLanguage(event.target.value);studyFlowSave("studyflow-language",document.documentElement.dataset.language);}}));
+  document.querySelectorAll('input[name="setting-density"]').forEach((input)=>input.addEventListener("change",(event)=>{{studyFlowApplyDensity(event.target.value);studyFlowSave("studyflow-density",document.documentElement.dataset.density);}}));
+  document.getElementById("setting-motion")?.addEventListener("change",(event)=>{{studyFlowApplyMotion(event.target.checked);studyFlowSave("studyflow-reduced-motion",event.target.checked?"true":"false");}});
+  document.getElementById("reset-settings")?.addEventListener("click",studyFlowResetSettings);
+}});
+</script></body></html>'''
 
 def _json_default(value):
     if isinstance(value, (date, datetime)):
@@ -236,9 +345,7 @@ def _dashboard(message="", error="", plan=None):
         (f'<div class="notice">{escape(message)}</div>' if message else '')
         + (f'<div class="error">{escape(error)}</div>' if error else '')
     )
-    overdue = sum(
-        1 for x in planner.rank_study_items(tasks, exams, date.today()) if x["overdue"]
-    )
+    overdue = sum(1 for x in planner.rank_study_items(tasks, exams, date.today()) if x["overdue"])
     if overdue:
         notice += (
             f'<div class="warning">Hay {overdue} elemento(s) vencido(s). '
@@ -247,156 +354,168 @@ def _dashboard(message="", error="", plan=None):
     start = planner._round_up_to_five_minutes(datetime.now()).strftime("%H:%M")
     has_subjects = bool(subjects)
     has_exams = bool(exams)
-
     subject_list = _subject_picker(subjects)
     exam_list = _exam_picker(exams, subjects)
 
-    body = f'''<header><h1>StudyFlow</h1>
-<div class="muted">Planificación y análisis académico · <span class="badge">Puntos 8–15</span></div>
-</header>{notice}<div class="grid">
-
+    inicio = f'''
+<section id="inicio" class="section-heading">
+  <h2 data-i18n="section.home">1. Inicio</h2>
+  <p class="section-description" data-i18n="section.home.desc">Tu resumen académico, rendimiento y registro de actividades.</p>
+</section>
+<section class="grid">
+  <section class="card">
+    <h2 data-i18n="summary.title">📊 Resumen</h2>
+    <div class="metric">{report['general_average']:g}/100</div>
+    <p class="muted" data-i18n="summary.average">Promedio actual</p>
+    <p><span class="badge">{len(tasks)} <span data-i18n="summary.tasks">tareas</span></span> <span class="badge">{len(exams)} <span data-i18n="summary.exams">exámenes</span></span> <span class="badge">{len(evaluations)} <span data-i18n="summary.evaluations">evaluaciones</span></span></p>
+  </section>
+  <section class="card">
+    <h2 data-i18n="priorities.title">🎯 Prioridades actuales</h2>
+    <p class="muted" data-i18n="priorities.desc">Elementos pendientes ordenados por prioridad.</p>
+    {_priority_html(tasks, exams, subjects)}
+  </section>
+  {_performance_summary_html(performance)}
+  <section class="card wide">
+    <h2 data-i18n="registered.tasks">✅ Tareas registradas</h2>
+    {('<p class="muted" data-i18n="empty.tasks">No hay tareas registradas.</p>' if not tasks else ''.join(
+      f"<div class='session'><strong>{escape(names.get(t.subject_id,'Materia'))}</strong> · {escape(t.name)} · {t.deadline} · {t.progress}% "
+      + (f"<form method='post' action='/tasks/{t.id}/complete' style='display:inline'><button type='submit' data-i18n='actions.complete'>Marcar como completada</button></form>"
+         if t.status != 'completed' else '✅ <span data-i18n="status.completed">Completada</span>')
+      + "</div>" for t in tasks))}
+  </section>
+  <section class="card">
+    <h2 data-i18n="registered.exams">📝 Exámenes registrados</h2>
+    {('<p class="muted" data-i18n="empty.exams">No hay exámenes registrados.</p>' if not exams else ''.join(
+      f"<p><strong>{escape(names.get(e.subject_id,'Materia'))}</strong> · {escape(e.name)} · {e.date} · preparación sugerida: {planner.estimate_exam_minutes(e)} min</p>"
+      for e in exams))}
+  </section>
+  <section class="card">
+    <h2 data-i18n="registered.evaluations">📒 Evaluaciones registradas</h2>
+    {('<p class="muted" data-i18n="empty.evaluations">Todavía no hay notas registradas.</p>' if not evaluations else ''.join(
+      f"<p>{escape(names.get(next((e.subject_id for e in exams if e.id==v.exam_id),0),'Materia'))} · {v.grade:g}/100 · {v.date} · {escape(v.evaluation_type)}</p>"
+      for v in evaluations))}
+  </section>
+</section>
+'''
+    agregar = f'''
+<section id="agregar" class="section-heading">
+  <h2 data-i18n="section.add">2. Agregar</h2>
+  <p class="section-description" data-i18n="section.add.desc">Registra materias, tareas, exámenes y evaluaciones.</p>
+</section>
 <section class="card wide">
-<h2>📚 Agregar materias</h2>
-<p class="muted">Escribe tus materias, una por línea. Se guardarán en la base de datos y después podrás elegirlas desde las listas visibles de tareas y exámenes.</p>
-<form method="post" action="/subjects">
-<label for="subjects">Agregar materias</label>
-<textarea id="subjects" name="subjects" rows="5" placeholder="Ejemplo:
-Cálculo
-Programación
-Física" required></textarea>
-<button type="submit">Guardar materias</button>
-</form>
-{f'<div class="saved-subjects"><strong>Materias guardadas:</strong> ' + ' · '.join(escape(s.name) for s in subjects) + '</div>' if subjects else '<p class="muted">Todavía no hay materias guardadas.</p>'}
-{('<div class="subject-management"><h3>Gestionar materias</h3>' + ''.join(
-    f"<div class='session'><strong>{escape(s.name)}</strong>"
-    f"<form method='post' action='/subjects/{s.id}/delete' style='display:inline' onsubmit='return confirm(\"¿Eliminar esta materia? Solo será posible si no tiene tareas ni exámenes.\")'>"
-    '<button type="submit">Eliminar materia</button></form></div>'
-    for s in subjects
-) + '</div>') if subjects else ''}
+  <h2 data-i18n="subjects.title">📚 Agregar materias</h2>
+  <p class="muted" data-i18n="subjects.desc">Escribe tus materias, una por línea. Se guardarán y estarán disponibles para tus actividades.</p>
+  <form method="post" action="/subjects">
+    <label for="subjects" data-i18n="subjects.label">Materias</label>
+    <textarea id="subjects" name="subjects" rows="5" placeholder="Cálculo&#10;Programación&#10;Física" required></textarea>
+    <button type="submit" data-i18n="subjects.save">Guardar materias</button>
+  </form>
+  {f'<div class="saved-subjects"><strong data-i18n="subjects.saved">Materias guardadas:</strong> ' + ' · '.join(escape(s.name) for s in subjects) + '</div>' if subjects else '<p class="muted" data-i18n="subjects.empty">Todavía no hay materias guardadas.</p>'}
+  {('<div class="subject-management"><h3 data-i18n="subjects.manage">Gestionar materias</h3>' + ''.join(
+      f"<div class='session'><strong>{escape(s.name)}</strong>"
+      f"<form method='post' action='/subjects/{s.id}/delete' style='display:inline' onsubmit='return confirm(\"¿Eliminar esta materia? Solo será posible si no tiene tareas ni exámenes.\")'>"
+      '<button type="submit" data-i18n="subjects.delete">Eliminar materia</button></form></div>'
+      for s in subjects
+  ) + '</div>') if subjects else ''}
 </section>
-
-<section class="card">
-<h2>📅 Generador de plan de estudio</h2>
-<p class="muted">Introduce tus horas disponibles y StudyFlow distribuye el tiempo entre tareas y exámenes según prioridad, tiempo y fecha límite.</p>
-<form method="post" action="/plan">
-<label>Horas disponibles hoy</label>
-<input name="hours" type="number" min="0.25" max="16" step="0.25" value="3" required>
-<label>Hora de inicio</label>
-<input name="start_time" type="time" value="{start}" required>
-<button type="submit">Generar plan de hoy</button>
-</form>
-<p class="muted">Máximo 80 min por sesión y 15 min de descanso.</p>
+<section class="grid">
+  <form class="card" method="post" action="/tasks">
+    <h2 data-i18n="tasks.add.title">📘 Nueva tarea</h2>
+    <p class="muted" data-i18n="tasks.add.desc">Completa los datos de la actividad y guárdala en tu planificador.</p>
+    <label data-i18n="form.subject">Materia</label>
+    {subject_list}
+    <label data-i18n="form.name">Nombre</label>
+    <input name="name" required>
+    <label data-i18n="form.description">Descripción</label>
+    <textarea name="description"></textarea>
+    <label data-i18n="form.deadline">Fecha límite</label>
+    <input name="deadline" type="date" min="{today}" required>
+    <label data-i18n="form.difficulty">Dificultad (1–10)</label>
+    <input name="difficulty" type="number" min="1" max="10" value="5" required>
+    <label data-i18n="form.minutes">Tiempo estimado (min)</label>
+    <input name="estimated_minutes" type="number" min="1" value="60" required>
+    <label data-i18n="form.progress">Progreso</label>
+    <input name="progress" type="number" min="0" max="100" value="0" required>
+    <label data-i18n="form.status">Estado</label>
+    <div class="choice-list">
+      <label><input type="radio" name="status" value="pending" checked required><span data-i18n="status.pending">Pendiente</span></label>
+      <label><input type="radio" name="status" value="in_progress"><span data-i18n="status.progress">En progreso</span></label>
+      <label><input type="radio" name="status" value="completed"><span data-i18n="status.completed">Completada</span></label>
+    </div>
+    <button type="submit"{"" if has_subjects else " disabled"} data-i18n="tasks.save">Guardar tarea</button>
+    {"" if has_subjects else '<p class="muted" data-i18n="tasks.need.subject">Agrega al menos una materia para poder guardar tareas.</p>'}
+  </form>
+  <form class="card" method="post" action="/exams">
+    <h2 data-i18n="exams.add.title">📝 Nuevo examen</h2>
+    <p class="muted" data-i18n="exams.add.desc">Registra una fecha, dificultad y peso para calcular prioridades.</p>
+    <label data-i18n="form.subject">Materia</label>
+    {_subject_picker(subjects)}
+    <label data-i18n="form.name">Nombre</label>
+    <input name="name" required>
+    <label data-i18n="form.exam.date">Fecha del examen</label>
+    <input name="exam_date" type="date" min="{today}" required>
+    <label data-i18n="form.difficulty">Dificultad (1–10)</label>
+    <input name="difficulty" type="number" min="1" max="10" value="7" required>
+    <label data-i18n="form.weight">Peso (%)</label>
+    <input name="weight" type="number" min="0" max="100" step="0.1" value="20" required>
+    <button type="submit"{"" if has_subjects else " disabled"} data-i18n="exams.save">Guardar examen</button>
+    {"" if has_subjects else '<p class="muted" data-i18n="exams.need.subject">Agrega al menos una materia para poder guardar exámenes.</p>'}
+  </form>
+  <form class="card wide" method="post" action="/evaluations">
+    <h2 data-i18n="evaluations.add.title">📒 Registrar evaluación</h2>
+    <p class="muted" data-i18n="evaluations.add.desc">Relaciona una nota con uno de tus exámenes.</p>
+    <label data-i18n="form.exam">Examen</label>
+    {exam_list}
+    <label data-i18n="form.grade">Nota (0–100)</label>
+    <input name="grade" type="number" min="0" max="100" step="0.01" required{"" if has_exams else " disabled"}>
+    <label data-i18n="form.date">Fecha</label>
+    <input name="date" type="date" value="{today}" required{"" if has_exams else " disabled"}>
+    <label data-i18n="form.type">Tipo de evaluación</label>
+    <input name="type" required{"" if has_exams else " disabled"}>
+    <button type="submit"{"" if has_exams else " disabled"} data-i18n="evaluations.save">Guardar evaluación</button>
+    {"" if has_exams else '<p class="muted" data-i18n="evaluations.need.exam">Crea al menos un examen para poder registrar una evaluación.</p>'}
+  </form>
 </section>
-
-<section class="card">
-<h2>📊 Resumen</h2>
-<div class="metric">{report['general_average']:g}/100</div>
-<p class="muted">Promedio actual</p>
-<p><span class="badge">{len(tasks)} tareas</span> <span class="badge">{len(exams)} exámenes</span> <span class="badge">{len(evaluations)} evaluaciones</span></p>
+'''
+    graficos = f'''
+<section id="graficos-plan" class="section-heading">
+  <h2 data-i18n="section.analytics">3. Gráficos y plan de estudio</h2>
+  <p class="section-description" data-i18n="section.analytics.desc">Consulta tus visualizaciones y genera el plan de estudio diario.</p>
 </section>
-
-{_performance_summary_html(performance)}
-
-<section class="card wide"><h2>🎯 Prioridades de estudio</h2>{_priority_html(tasks, exams, subjects)}</section>
-
-<section class="card wide">
-<h2>➕ Registrar tareas y exámenes</h2>
-<p class="muted">Ya no usamos menús desplegables. Selecciona una materia directamente de la lista visible.</p>
-<div class="grid">
-<form method="post" action="/tasks">
-<h3>Nueva tarea</h3>
-<label>Materia</label>
-{subject_list}
-<label>Nombre</label>
-<input name="name" required>
-<label>Descripción</label>
-<textarea name="description"></textarea>
-<label>Fecha límite</label>
-<input name="deadline" type="date" min="{today}" required>
-<label>Dificultad (1–10)</label>
-<input name="difficulty" type="number" min="1" max="10" value="5" required>
-<label>Tiempo estimado (min)</label>
-<input name="estimated_minutes" type="number" min="1" value="60" required>
-<label>Progreso</label>
-<input name="progress" type="number" min="0" max="100" value="0" required>
-<label>Estado</label>
-<div class="choice-list">
-<label><input type="radio" name="status" value="pending" checked required><span>Pendiente</span></label>
-<label><input type="radio" name="status" value="in_progress"><span>En progreso</span></label>
-<label><input type="radio" name="status" value="completed"><span>Completada</span></label>
-</div>
-<button type="submit"{"" if has_subjects else " disabled"}>Guardar tarea</button>
-{"" if has_subjects else '<p class="muted">Agrega al menos una materia para poder guardar tareas.</p>'}
-</form>
-
-<form method="post" action="/exams">
-<h3>Nuevo examen</h3>
-<label>Materia</label>
-{_subject_picker(subjects)}
-<label>Nombre</label>
-<input name="name" required>
-<label>Fecha del examen</label>
-<input name="exam_date" type="date" min="{today}" required>
-<label>Dificultad (1–10)</label>
-<input name="difficulty" type="number" min="1" max="10" value="7" required>
-<label>Peso (%)</label>
-<input name="weight" type="number" min="0" max="100" step="0.1" value="20" required>
-<button type="submit"{"" if has_subjects else " disabled"}>Guardar examen</button>
-{"" if has_subjects else '<p class="muted">Agrega al menos una materia para poder guardar exámenes.</p>'}
-</form>
-</div>
+<section class="grid">
+  <section class="card wide">
+    <h2 data-i18n="charts.title">📈 Gráficos académicos</h2>
+    <p class="muted" data-i18n="charts.desc">Las visualizaciones se actualizan con tus datos registrados.</p>
+    <h3 data-i18n="charts.evolution">Evolución de notas</h3>
+    <img class="chart" src="/charts/grade-evolution.svg" alt="Evolución de notas">
+    <h3 data-i18n="charts.subjects">Promedio por materia</h3>
+    <img class="chart" src="/charts/subject-averages.svg" alt="Promedio por materia">
+    <h3 data-i18n="charts.time">Tiempo de estudio estimado</h3>
+    <img class="chart" src="/charts/study-time.svg" alt="Tiempo de estudio estimado por materia">
+  </section>
+  <section class="card">
+    <h2 data-i18n="plan.title">📅 Plan de estudio</h2>
+    <p class="muted" data-i18n="plan.desc">Distribuye el tiempo entre tareas y exámenes según prioridad, dificultad, tiempo y fecha límite.</p>
+    <form method="post" action="/plan">
+      <label data-i18n="plan.hours">Horas disponibles hoy</label>
+      <input name="hours" type="number" min="0.25" max="16" step="0.25" value="3" required>
+      <label data-i18n="plan.start">Hora de inicio</label>
+      <input name="start_time" type="time" value="{start}" required>
+      <button type="submit" data-i18n="plan.generate">Generar plan de hoy</button>
+    </form>
+    <p class="muted" data-i18n="plan.rule">Máximo 80 min por sesión y 15 min de descanso.</p>
+  </section>
+  <section class="card">
+    <h2 data-i18n="analysis.title">🔎 Análisis detallado</h2>
+    <p class="muted" data-i18n="analysis.desc">Revisa fortalezas, rendimiento normal, atención y tendencias con umbrales configurables.</p>
+    <form method="get" action="/analysis"><button type="submit" data-i18n="analysis.open">Abrir análisis detallado</button></form>
+  </section>
 </section>
-
-<section class="card wide">
-<h2>📝 Registrar evaluación</h2>
-<p class="muted">Selecciona el examen desde la lista visible. Así no dependemos de un menú desplegable.</p>
-<form method="post" action="/evaluations">
-<label>Examen</label>
-{exam_list}
-<label>Nota (0–100)</label>
-<input name="grade" type="number" min="0" max="100" step="0.01" required{"" if has_exams else " disabled"}>
-<label>Fecha</label>
-<input name="date" type="date" value="{today}" required{"" if has_exams else " disabled"}>
-<label>Tipo de evaluación</label>
-<input name="type" required{"" if has_exams else " disabled"}>
-<button type="submit"{"" if has_exams else " disabled"}>Guardar evaluación</button>
-{"" if has_exams else '<p class="muted">Crea al menos un examen para poder registrar una evaluación.</p>'}
-</form>
-</section>
-
-<section class="card wide"><h2>✅ Tareas registradas</h2>
-{('<p class="muted">No hay tareas registradas.</p>' if not tasks else ''.join(
-    f"<div class='session'><strong>{escape(names.get(t.subject_id,'Materia'))}</strong> · {escape(t.name)} · {t.deadline} · {t.progress}% "
-    + (f"<form method='post' action='/tasks/{t.id}/complete' style='display:inline'><button type='submit'>Marcar como completada</button></form>"
-       if t.status != 'completed' else '✅ Completada')
-    + "</div>" for t in tasks))}
-</section>
-
-<section class="card wide"><h2>Exámenes registrados</h2>
-{('<p class="muted">No hay exámenes registrados.</p>' if not exams else ''.join(
-    f"<p><strong>{escape(names.get(e.subject_id,'Materia'))}</strong> · {escape(e.name)} · {e.date} · preparación sugerida: {planner.estimate_exam_minutes(e)} min</p>"
-    for e in exams))}
-</section>
-
-<section class="card wide"><h2>Evaluaciones registradas</h2>
-{('<p class="muted">Todavía no hay notas registradas.</p>' if not evaluations else ''.join(
-    f"<p>{escape(names.get(next((e.subject_id for e in exams if e.id==v.exam_id),0),'Materia'))} · {v.grade:g}/100 · {v.date} · {escape(v.evaluation_type)}</p>"
-    for v in evaluations))}
-</section>'''
+'''
     if plan is not None:
-        body += f'<section class="card wide"><h2>HOY · Plan generado</h2>{_plan_html(plan)}</section>'
-    body += '''<style>
-.picker-list{display:grid;gap:8px;margin:4px 0 12px}
-.picker-option,.choice-list label{display:flex;align-items:center;gap:10px;border:1px solid #d0d5dd;border-radius:10px;padding:10px;background:#fff;cursor:pointer}
-.picker-option:hover,.choice-list label:hover{border-color:#98a2b3;background:#f8fafc}
-.picker-option input,.choice-list input{margin:0}
-.picker-option span{display:flex;flex-direction:column;gap:2px}
-.picker-option small{color:#667085}
-.choice-list{display:grid;gap:7px}
-.empty-picker{padding:11px 12px;border:1px dashed #d0d5dd;border-radius:10px;color:#667085;background:#f8fafc;margin-bottom:10px}
-.saved-subjects{margin-top:10px;padding:10px 12px;border-radius:10px;background:#f8fafc;border:1px solid #eaecf0}
-</style>'''
-    return _page(body + '</div>')
+        graficos = graficos.rsplit("</section>", 1)[0] + f'<section class="card wide" id="plan-generado"><h2 data-i18n="plan.generated">HOY · Plan generado</h2>{_plan_html(plan)}</section></section>'
+    body = f'''<header><h1>StudyFlow</h1><div class="muted" data-i18n="brand.subtitle">Planificación y análisis académico</div></header>{notice}{inicio}{agregar}{graficos}'''
+    return _page(body)
 
 
 
