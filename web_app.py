@@ -688,7 +688,7 @@ def application(environ, start_response):
                 return _html(start_response, _dashboard(message="Materia eliminada correctamente."))
 
         except (ValueError, TypeError, KeyError, database.DatabaseError) as exc:
-            return _operation_error(start_response, f"No se pudo completar la operación: {exc}", "400 Bad Request")
+            return _operation_error(start_response, f"No se pudo completar la operación: {exc}", "200 OK")
         except Exception:
             LOGGER.exception("Error inesperado procesando una operación POST")
             return _error_page(start_response, "Ocurrió un error interno. No se perdió la información guardada.", "500 Internal Server Error", "Error interno")
