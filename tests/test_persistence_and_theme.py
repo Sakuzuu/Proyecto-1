@@ -118,8 +118,8 @@ class PersistenceAndThemeTests(unittest.TestCase):
         self.assertIn(':root[data-theme="dark"]', body)
         self.assertIn('studyFlowSave("studyflow-theme",document.documentElement.dataset.theme)', body)
         self.assertIn('name="setting-theme"', body)
-        self.assertIn('id="setting-language"', body)
-        self.assertIn('id="setting-density"', body)
+        self.assertIn('name="setting-language"', body)
+        self.assertIn('name="setting-density"', body)
         self.assertNotIn("<select", body.lower())
 
     def test_dark_theme_is_present_on_analysis_page(self):
