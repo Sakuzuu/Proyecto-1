@@ -250,7 +250,7 @@ def _dashboard(message="", error="", plan=None):
     exam_list = _exam_picker(exams, subjects)
 
     body = f'''<header><h1>StudyFlow</h1>
-<div class="muted">Planificación y análisis académico · <span class="badge">Puntos 8–11</span></div>
+<div class="muted">Planificación y análisis académico · <span class="badge">Puntos 8–15</span></div>
 </header>{notice}<div class="grid">
 
 <section class="card wide">
