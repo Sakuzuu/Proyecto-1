@@ -148,7 +148,7 @@ class ErrorHandlingWebTests(unittest.TestCase):
             "GET",
             {"hours": "hola"},
         )
-        self.assertEqual(status, "200 OK")
+        self.assertEqual(status, "400 Bad Request")
         self.assertEqual(headers["Content-Type"], "application/json; charset=utf-8")
         self.assertIn("debe ser un número válido", json.loads(body)["error"])
 
