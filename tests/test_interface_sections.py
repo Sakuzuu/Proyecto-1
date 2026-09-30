@@ -178,6 +178,21 @@ class InterfaceSectionsTests(unittest.TestCase):
             self.assertEqual(headers["Content-Type"], "image/svg+xml; charset=utf-8")
             self.assertIn("<svg", body)
 
+    def test_inline_preferences_javascript_has_valid_syntax(self):
+        status, _, body = self.request(web_app.application)
+        self.assertEqual(status, "200 OK")
+        script = body.rsplit("<script>", 1)[-1].split("</script>", 1)[0]
+        with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as handle:
+            handle.write(script)
+            path = handle.name
+        try:
+            import shutil
+            node = shutil.which("node")
+            if node:
+                subprocess.run([node, "--check", path], check=True, capture_output=True, text=True)
+        finally:
+            Path(path).unlink(missing_ok=True)
+
     def test_language_and_preferences_have_real_browser_handlers(self):
         _, _, body = self.request(web_app.application)
         expected = (
