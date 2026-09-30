@@ -656,13 +656,20 @@ def application(environ, start_response):
                 return _html(start_response, _dashboard(message="Examen creado correctamente."))
 
             if path == "/evaluations":
-                ev = database.create_evaluation(
-                    _int(form, "exam_id", "El examen"),
-                    _float(form, "grade", "La nota"),
-                    _date(form, "date", "La fecha"),
-                    _text(form, "type", "El tipo de evaluación"),
-                    database.DATABASE_PATH,
-                )
+                try:
+                    ev = database.create_evaluation(
+                        _int(form, "exam_id", "El examen"),
+                        _float(form, "grade", "La nota"),
+                        _date(form, "date", "La fecha"),
+                        _text(form, "type", "El tipo de evaluación"),
+                        database.DATABASE_PATH,
+                    )
+                except (ValueError, TypeError, KeyError, database.DatabaseError) as exc:
+                    return _operation_error(
+                        start_response,
+                        f"No se pudo guardar la evaluación: {exc}",
+                        "200 OK",
+                    )
                 return _html(start_response, _dashboard(message=f"Nota guardada correctamente: {ev.grade:g}/100"))
 
             match = re.fullmatch(r"/tasks/(\d+)/complete", path)
