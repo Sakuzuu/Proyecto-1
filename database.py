@@ -5,6 +5,7 @@ backend can later be consumed by a browser-based web application.
 """
 from datetime import date
 from pathlib import Path
+import os
 import sqlite3
 from typing import Optional, Union
 
@@ -12,7 +13,9 @@ from models import Evaluation, Exam, Subject, Task
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
-DATABASE_PATH = DATA_DIR / "studyflow.db"
+DATABASE_PATH = Path(
+    os.getenv("STUDYFLOW_DATABASE_PATH", str(DATA_DIR / "studyflow.db"))
+)
 SCHEMA_PATH = BASE_DIR / "schema.sql"
 
 DatabasePath = Union[str, Path]
@@ -54,6 +57,9 @@ def get_connection(database_path: DatabasePath = DATABASE_PATH) -> sqlite3.Conne
         connection = sqlite3.connect(path, timeout=5.0)
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA foreign_keys = ON")
+        connection.execute("PRAGMA busy_timeout = 5000")
+        connection.execute("PRAGMA journal_mode = WAL")
+        connection.execute("PRAGMA synchronous = FULL")
         return connection
     except (OSError, sqlite3.Error) as exc:
         raise DatabaseError("No se pudo abrir la base de datos.") from exc
@@ -69,6 +75,8 @@ def initialize_database(database_path: DatabasePath = DATABASE_PATH) -> None:
             connection.executescript(schema)
             connection.execute("PRAGMA user_version = 1")
             connection.commit()
+            # With WAL + FULL synchronous, each write is committed before the
+            # connection closes; the context manager then closes it reliably.
     except DatabaseError:
         raise
     except (OSError, sqlite3.Error) as exc:
