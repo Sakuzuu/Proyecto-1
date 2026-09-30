@@ -2,6 +2,7 @@
 from datetime import date, datetime, time
 from html import escape
 import json
+import logging
 import os
 import re
 from urllib.parse import parse_qs
@@ -11,6 +12,9 @@ import analyzer
 import charts
 import database
 import planner
+
+
+LOGGER = logging.getLogger("studyflow.web")
 
 
 def _page(body, title="StudyFlow"):
@@ -32,16 +36,49 @@ def _json(start_response, payload, status="200 OK"):
 
 
 def _html(start_response, body, status="200 OK"):
-    data = body.encode()
+    data = body.encode("utf-8")
     start_response(status, [("Content-Type", "text/html; charset=utf-8"), ("Content-Length", str(len(data)))])
     return [data]
 
 
+def _error_page(start_response, message, status="500 Internal Server Error", title="Error"):
+    safe_message = escape(message)
+    return _html(
+        start_response,
+        _page(
+            f'<section class="card error-page"><h2>{escape(title)}</h2><p>{safe_message}</p>'
+            '<p class="muted">Puedes volver al inicio e intentarlo nuevamente.</p>'
+            '<form method="get" action="/"><button type="submit">Volver al inicio</button></form></section>',
+            title,
+        ),
+        status,
+    )
+
+
+def _operation_error(start_response, message, status="400 Bad Request"):
+    try:
+        return _html(start_response, _dashboard(error=message), status)
+    except Exception:
+        LOGGER.exception("No se pudo renderizar el mensaje de error de la operación")
+        return _error_page(start_response, message, status, "No se pudo completar la operación")
+
+
 def _form(environ):
-    length = int(environ.get("CONTENT_LENGTH") or 0)
+    raw_length = environ.get("CONTENT_LENGTH") or "0"
+    try:
+        length = int(raw_length)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("El tamaño del formulario no es válido.") from exc
     if length < 0 or length > 10000:
         raise ValueError("El formulario es demasiado grande.")
-    raw = environ.get("wsgi.input").read(length).decode()
+    stream = environ.get("wsgi.input")
+    if stream is None:
+        raise ValueError("No se recibió el contenido del formulario.")
+    raw_bytes = stream.read(length)
+    try:
+        raw = raw_bytes.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ValueError("El formulario contiene texto no válido.") from exc
     return {k: (v[0] if v else "") for k, v in parse_qs(raw, keep_blank_values=True).items()}
 
 
@@ -213,7 +250,7 @@ def _dashboard(message="", error="", plan=None):
     exam_list = _exam_picker(exams, subjects)
 
     body = f'''<header><h1>StudyFlow</h1>
-<div class="muted">Planificación y análisis académico · <span class="badge">Puntos 8–11</span></div>
+<div class="muted">Planificación y análisis académico · <span class="badge">Puntos 8–15</span></div>
 </header>{notice}<div class="grid">
 
 <section class="card wide">
@@ -228,6 +265,12 @@ Física" required></textarea>
 <button type="submit">Guardar materias</button>
 </form>
 {f'<div class="saved-subjects"><strong>Materias guardadas:</strong> ' + ' · '.join(escape(s.name) for s in subjects) + '</div>' if subjects else '<p class="muted">Todavía no hay materias guardadas.</p>'}
+{('<div class="subject-management"><h3>Gestionar materias</h3>' + ''.join(
+    f"<div class='session'><strong>{escape(s.name)}</strong>"
+    f"<form method='post' action='/subjects/{s.id}/delete' style='display:inline' onsubmit='return confirm(\"¿Eliminar esta materia? Solo será posible si no tiene tareas ni exámenes.\")'>"
+    '<button type="submit">Eliminar materia</button></form></div>'
+    for s in subjects
+) + '</div>') if subjects else ''}
 </section>
 
 <section class="card">
@@ -400,77 +443,157 @@ def _session_dict(x):
 
 
 def application(environ, start_response):
-    path = environ.get('PATH_INFO','/'); method = environ.get('REQUEST_METHOD','GET').upper()
-    if path == '/health':
-        try: database.initialize_database(database.DATABASE_PATH); return _json(start_response, {'status':'ok'})
-        except database.DatabaseError as exc: return _json(start_response, {'status':'error','detail':str(exc)}, '500 Internal Server Error')
-    if path == '/api/averages' and method == 'GET':
-        try: return _json(start_response, analyzer.build_average_report(database.list_subjects(database_path=database.DATABASE_PATH), database.list_exams(database_path=database.DATABASE_PATH), database.list_evaluations(database_path=database.DATABASE_PATH)))
-        except database.DatabaseError as exc: return _json(start_response, {'error':str(exc)}, '500 Internal Server Error')
-    if path == '/api/performance' and method == 'GET':
+    path = environ.get("PATH_INFO", "/")
+    method = environ.get("REQUEST_METHOD", "GET").upper()
+
+    if path == "/health" and method == "GET":
         try:
-            subjects=database.list_subjects(database_path=database.DATABASE_PATH); exams=database.list_exams(database_path=database.DATABASE_PATH); evaluations=database.list_evaluations(database_path=database.DATABASE_PATH)
+            database.initialize_database(database.DATABASE_PATH)
+            return _json(start_response, {"status": "ok"})
+        except database.DatabaseError as exc:
+            return _json(start_response, {"status": "error", "detail": str(exc)}, "500 Internal Server Error")
+        except Exception:
+            LOGGER.exception("Error inesperado en /health")
+            return _json(start_response, {"status": "error", "detail": "No se pudo comprobar la base de datos."}, "500 Internal Server Error")
+
+    if path == "/api/averages" and method == "GET":
+        try:
+            return _json(
+                start_response,
+                analyzer.build_average_report(
+                    database.list_subjects(database_path=database.DATABASE_PATH),
+                    database.list_exams(database_path=database.DATABASE_PATH),
+                    database.list_evaluations(database_path=database.DATABASE_PATH),
+                ),
+            )
+        except database.DatabaseError as exc:
+            return _json(start_response, {"error": str(exc)}, "500 Internal Server Error")
+        except Exception:
+            LOGGER.exception("Error inesperado en /api/averages")
+            return _json(start_response, {"error": "No se pudo calcular los promedios."}, "500 Internal Server Error")
+
+    if path == "/api/performance" and method == "GET":
+        try:
+            subjects = database.list_subjects(database_path=database.DATABASE_PATH)
+            exams = database.list_exams(database_path=database.DATABASE_PATH)
+            evaluations = database.list_evaluations(database_path=database.DATABASE_PATH)
             return _json(start_response, analyzer.build_performance_report(subjects, exams, evaluations))
-        except (ValueError,database.DatabaseError) as exc:
-            return _json(start_response, {'error':str(exc)}, '400 Bad Request')
-    if path == '/api/priorities' and method == 'GET':
+        except (ValueError, database.DatabaseError) as exc:
+            return _json(start_response, {"error": str(exc)}, "400 Bad Request")
+        except Exception:
+            LOGGER.exception("Error inesperado en /api/performance")
+            return _json(start_response, {"error": "No se pudo generar el informe de rendimiento."}, "500 Internal Server Error")
+
+    if path == "/api/priorities" and method == "GET":
         try:
-            subjects=database.list_subjects(database_path=database.DATABASE_PATH); items=planner.rank_study_items(database.list_tasks(database_path=database.DATABASE_PATH), database.list_exams(database_path=database.DATABASE_PATH), date.today()); names=_names(subjects)
-            for item in items: item['subject_name']=names.get(item['subject_id'],'Materia')
-            return _json(start_response, {'date':date.today(),'items':items})
-        except (ValueError,database.DatabaseError) as exc: return _json(start_response, {'error':str(exc)}, '400 Bad Request')
-    if path == '/api/study-plan' and method == 'GET':
+            subjects = database.list_subjects(database_path=database.DATABASE_PATH)
+            items = planner.rank_study_items(
+                database.list_tasks(database_path=database.DATABASE_PATH),
+                database.list_exams(database_path=database.DATABASE_PATH),
+                date.today(),
+            )
+            names = _names(subjects)
+            for item in items:
+                item["subject_name"] = names.get(item["subject_id"], "Materia")
+            return _json(start_response, {"date": date.today(), "items": items})
+        except (ValueError, database.DatabaseError) as exc:
+            return _json(start_response, {"error": str(exc)}, "400 Bad Request")
+        except Exception:
+            LOGGER.exception("Error inesperado en /api/priorities")
+            return _json(start_response, {"error": "No se pudieron calcular las prioridades."}, "500 Internal Server Error")
+
+    if path == "/api/study-plan" and method == "GET":
         try:
-            q={k:(v[0] if v else '') for k,v in parse_qs(environ.get('QUERY_STRING',''),keep_blank_values=True).items()}; plan=_make_plan(q)
-            return _json(start_response, {'date':date.today(),'available_hours':_float(q,'hours','Las horas'),'sessions':[_session_dict(x) for x in plan],'study_minutes':sum(x.minutes for x in plan)})
-        except (ValueError,database.DatabaseError) as exc: return _json(start_response, {'error':str(exc)}, '400 Bad Request')
-    if path == '/charts' and method == 'GET':
+            q = {
+                k: (v[0] if v else "")
+                for k, v in parse_qs(environ.get("QUERY_STRING", ""), keep_blank_values=True).items()
+            }
+            plan = _make_plan(q)
+            return _json(
+                start_response,
+                {
+                    "date": date.today(),
+                    "available_hours": _float(q, "hours", "Las horas"),
+                    "sessions": [_session_dict(x) for x in plan],
+                    "study_minutes": sum(x.minutes for x in plan),
+                },
+            )
+        except (ValueError, database.DatabaseError) as exc:
+            return _json(start_response, {"error": str(exc)}, "400 Bad Request")
+        except Exception:
+            LOGGER.exception("Error inesperado en /api/study-plan")
+            return _json(start_response, {"error": "No se pudo generar el plan de estudio."}, "500 Internal Server Error")
+
+    if path == "/charts" and method == "GET":
         try:
             return _html(start_response, _charts_dashboard())
         except (ValueError, database.DatabaseError) as exc:
-            return _html(start_response, _page(f'<section class="card"><h2>Error</h2><p>{escape(str(exc))}</p></section>','Error'),'500 Internal Server Error')
-    if path in {'/charts/grade-evolution.svg', '/charts/subject-averages.svg', '/charts/study-time.svg'} and method == 'GET':
+            LOGGER.exception("Error generando la página de gráficos")
+            return _error_page(start_response, str(exc), "500 Internal Server Error", "Error al cargar los gráficos")
+        except Exception:
+            LOGGER.exception("Error inesperado generando la página de gráficos")
+            return _error_page(start_response, "Ocurrió un error interno al cargar los gráficos.", "500 Internal Server Error", "Error interno")
+
+    if path in {"/charts/grade-evolution.svg", "/charts/subject-averages.svg", "/charts/study-time.svg"} and method == "GET":
         try:
             subjects = database.list_subjects(database_path=database.DATABASE_PATH)
             tasks = database.list_tasks(database_path=database.DATABASE_PATH)
             exams = database.list_exams(database_path=database.DATABASE_PATH)
             evaluations = database.list_evaluations(database_path=database.DATABASE_PATH)
-            if path.endswith('grade-evolution.svg'):
+            if path.endswith("grade-evolution.svg"):
                 svg = charts.plot_grade_evolution(evaluations, exams, subjects)
-            elif path.endswith('subject-averages.svg'):
+            elif path.endswith("subject-averages.svg"):
                 svg = charts.plot_subject_averages(subjects, exams, evaluations)
             else:
                 svg = charts.plot_study_time(tasks, subjects)
             data = svg.encode("utf-8")
-            start_response("200 OK", [
-                ("Content-Type", "image/svg+xml; charset=utf-8"),
-                ("Content-Length", str(len(data))),
-                ("Cache-Control", "no-store"),
-            ])
+            start_response(
+                "200 OK",
+                [
+                    ("Content-Type", "image/svg+xml; charset=utf-8"),
+                    ("Content-Length", str(len(data))),
+                    ("Cache-Control", "no-store"),
+                ],
+            )
             return [data]
         except (ValueError, database.DatabaseError) as exc:
-            return _json(start_response, {'error': str(exc)}, '400 Bad Request')
+            return _json(start_response, {"error": str(exc)}, "400 Bad Request")
+        except Exception:
+            LOGGER.exception("Error inesperado generando un gráfico")
+            return _json(start_response, {"error": "No se pudo generar el gráfico."}, "500 Internal Server Error")
 
-    if path == '/analysis' and method == 'GET':
+    if path == "/analysis" and method == "GET":
         try:
             return _html(start_response, _analysis_dashboard())
-        except (ValueError,database.DatabaseError) as exc:
-            return _html(start_response, _page(f'<section class="card"><h2>Error</h2><p>{escape(str(exc))}</p></section>','Error'),'500 Internal Server Error')
+        except (ValueError, database.DatabaseError) as exc:
+            return _error_page(start_response, str(exc), "500 Internal Server Error", "Error al cargar el análisis")
+        except Exception:
+            LOGGER.exception("Error inesperado en /analysis")
+            return _error_page(start_response, "Ocurrió un error interno al cargar el análisis.", "500 Internal Server Error", "Error interno")
 
-    if path in {'/','/evaluations'} and method == 'GET':
-        try: return _html(start_response, _dashboard())
-        except (ValueError,database.DatabaseError) as exc: return _html(start_response, _page(f'<section class="card"><h2>Error</h2><p>{escape(str(exc))}</p></section>','Error'),'500 Internal Server Error')
-    if method == 'POST':
+    if path in {"/", "/evaluations"} and method == "GET":
         try:
-            form=_form(environ)
-            if path == '/plan': return _html(start_response,_dashboard(plan=_make_plan(form)))
-            if path == '/subjects':
-                raw = _text(form, 'subjects', 'Las materias')
-                subject_names = [name.strip() for name in re.split(r'[\r\n]+', raw) if name.strip()]
+            return _html(start_response, _dashboard())
+        except (ValueError, database.DatabaseError) as exc:
+            return _error_page(start_response, str(exc), "500 Internal Server Error", "Error al cargar StudyFlow")
+        except Exception:
+            LOGGER.exception("Error inesperado cargando el dashboard")
+            return _error_page(start_response, "Ocurrió un error interno. Tus datos no se han eliminado.", "500 Internal Server Error", "Error interno")
+
+    if method == "POST":
+        try:
+            form = _form(environ)
+
+            if path == "/plan":
+                return _html(start_response, _dashboard(plan=_make_plan(form)))
+
+            if path == "/subjects":
+                raw = _text(form, "subjects", "Las materias")
+                subject_names = [name.strip() for name in re.split(r"[\r\n]+", raw) if name.strip()]
                 if not subject_names:
-                    raise ValueError('Escribe al menos una materia.')
+                    raise ValueError("Escribe al menos una materia.")
                 if len(subject_names) > 50:
-                    raise ValueError('Puedes agregar como máximo 50 materias a la vez.')
+                    raise ValueError("Puedes agregar como máximo 50 materias a la vez.")
                 existing = {
                     subject.name.casefold(): subject.name
                     for subject in database.list_subjects(database_path=database.DATABASE_PATH)
@@ -482,10 +605,7 @@ def application(environ, start_response):
                     if key in existing:
                         repeated.append(existing[key])
                         continue
-                    created = database.create_subject(
-                        subject_name,
-                        database_path=database.DATABASE_PATH,
-                    )
+                    created = database.create_subject(subject_name, database_path=database.DATABASE_PATH)
                     existing[key] = created.name
                     added.append(created.name)
                 if added and repeated:
@@ -495,32 +615,96 @@ def application(environ, start_response):
                 else:
                     message = "Todas las materias que escribiste ya estaban guardadas."
                 return _html(start_response, _dashboard(message=message))
-            if path == '/tasks':
-                sid=_int(form,'subject_id','La materia'); deadline=_date(form,'deadline','La fecha límite'); progress=_int(form,'progress','El progreso'); status=_text(form,'status','El estado')
-                if deadline < date.today(): raise ValueError('La fecha límite no puede estar antes de hoy.')
-                if progress == 100: status='completed'
-                elif status == 'completed': raise ValueError('Una tarea completada debe tener 100% de progreso.')
-                database.create_task(sid,_text(form,'name','El nombre'),form.get('description','').strip(),deadline,_int(form,'difficulty','La dificultad'),_int(form,'estimated_minutes','El tiempo estimado'),progress,status,database.DATABASE_PATH)
-                return _html(start_response,_dashboard(message='Tarea creada correctamente.'))
-            if path == '/exams':
-                sid=_int(form,'subject_id','La materia'); exam_date=_date(form,'exam_date','La fecha del examen')
-                if exam_date < date.today(): raise ValueError('La fecha del examen no puede estar antes de hoy.')
-                database.create_exam(sid,_text(form,'name','El nombre'),exam_date,_int(form,'difficulty','La dificultad'),_float(form,'weight','El peso'),database.DATABASE_PATH)
-                return _html(start_response,_dashboard(message='Examen creado correctamente.'))
-            if path == '/evaluations':
-                try:
-                    ev=database.create_evaluation(_int(form,'exam_id','El examen'),_float(form,'grade','La nota'),_date(form,'date','La fecha'),_text(form,'type','El tipo de evaluación'),database.DATABASE_PATH)
-                except (ValueError,TypeError,KeyError,database.DatabaseError) as exc:
-                    return _html(start_response,_dashboard(error=f'No se pudo guardar la evaluación: {exc}'))
-                return _html(start_response,_dashboard(message=f'Nota guardada correctamente: {ev.grade:g}/100'))
-            m=re.fullmatch(r'/tasks/(\d+)/complete',path)
-            if m:
-                task=database.get_task(int(m.group(1)),database.DATABASE_PATH); database.update_task(task.id,task.subject_id,task.name,task.description,task.deadline,task.difficulty,task.estimated_minutes,100,'completed',database.DATABASE_PATH)
-                return _html(start_response,_dashboard(message='Tarea marcada como completada.'))
-        except (ValueError,TypeError,KeyError,database.DatabaseError) as exc:
-            return _html(start_response,_dashboard(error=f'No se pudo completar la operación: {exc}'))
-    return _html(start_response,_page('<section class="card"><h2>404</h2><p>Página no encontrada.</p></section>','404'),'404 Not Found')
 
+            if path == "/tasks":
+                sid = _int(form, "subject_id", "La materia")
+                deadline = _date(form, "deadline", "La fecha límite")
+                progress = _int(form, "progress", "El progreso")
+                status = _text(form, "status", "El estado")
+                if deadline < date.today():
+                    raise ValueError("La fecha límite no puede estar antes de hoy.")
+                if progress == 100:
+                    status = "completed"
+                elif status == "completed":
+                    raise ValueError("Una tarea completada debe tener 100% de progreso.")
+                database.create_task(
+                    sid,
+                    _text(form, "name", "El nombre"),
+                    form.get("description", "").strip(),
+                    deadline,
+                    _int(form, "difficulty", "La dificultad"),
+                    _int(form, "estimated_minutes", "El tiempo estimado"),
+                    progress,
+                    status,
+                    database.DATABASE_PATH,
+                )
+                return _html(start_response, _dashboard(message="Tarea creada correctamente."))
+
+            if path == "/exams":
+                sid = _int(form, "subject_id", "La materia")
+                exam_date = _date(form, "exam_date", "La fecha del examen")
+                if exam_date < date.today():
+                    raise ValueError("La fecha del examen no puede estar antes de hoy.")
+                database.create_exam(
+                    sid,
+                    _text(form, "name", "El nombre"),
+                    exam_date,
+                    _int(form, "difficulty", "La dificultad"),
+                    _float(form, "weight", "El peso"),
+                    database.DATABASE_PATH,
+                )
+                return _html(start_response, _dashboard(message="Examen creado correctamente."))
+
+            if path == "/evaluations":
+                try:
+                    ev = database.create_evaluation(
+                        _int(form, "exam_id", "El examen"),
+                        _float(form, "grade", "La nota"),
+                        _date(form, "date", "La fecha"),
+                        _text(form, "type", "El tipo de evaluación"),
+                        database.DATABASE_PATH,
+                    )
+                except (ValueError, TypeError, KeyError, database.DatabaseError) as exc:
+                    return _operation_error(
+                        start_response,
+                        f"No se pudo guardar la evaluación: {exc}",
+                        "200 OK",
+                    )
+                return _html(start_response, _dashboard(message=f"Nota guardada correctamente: {ev.grade:g}/100"))
+
+            match = re.fullmatch(r"/tasks/(\d+)/complete", path)
+            if match:
+                task = database.get_task(int(match.group(1)), database.DATABASE_PATH)
+                database.update_task(
+                    task.id,
+                    task.subject_id,
+                    task.name,
+                    task.description,
+                    task.deadline,
+                    task.difficulty,
+                    task.estimated_minutes,
+                    100,
+                    "completed",
+                    database.DATABASE_PATH,
+                )
+                return _html(start_response, _dashboard(message="Tarea marcada como completada."))
+
+            match = re.fullmatch(r"/subjects/(\d+)/delete", path)
+            if match:
+                database.delete_subject(int(match.group(1)), database.DATABASE_PATH)
+                return _html(start_response, _dashboard(message="Materia eliminada correctamente."))
+
+        except (ValueError, TypeError, KeyError, database.DatabaseError) as exc:
+            return _operation_error(start_response, f"No se pudo completar la operación: {exc}", "200 OK")
+        except Exception:
+            LOGGER.exception("Error inesperado procesando una operación POST")
+            return _error_page(start_response, "Ocurrió un error interno. No se perdió la información guardada.", "500 Internal Server Error", "Error interno")
+
+    return _html(
+        start_response,
+        _page('<section class="card"><h2>404</h2><p>Página no encontrada.</p><form method="get" action="/"><button type="submit">Volver al inicio</button></form></section>', "404"),
+        "404 Not Found",
+    )
 
 def run():
     host=os.getenv('HOST','0.0.0.0'); port=int(os.getenv('PORT','8000'))

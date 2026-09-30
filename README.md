@@ -14,7 +14,13 @@ Aplicación de Python para gestionar el estudio y analizar el rendimiento acadé
 **Punto 8 — Generador de plan de estudio:** completado.  
 **Punto 9 — Dashboard de rendimiento:** completado.  
 **Punto 10 — Visualizaciones académicas:** completado.  
-**Punto 11 — Detección de fortalezas y debilidades:** completado.
+**Punto 11 — Detección de fortalezas y debilidades:** completado.  \n**Punto 15 — Validación y manejo de errores:** completado.
+
+## Punto 15 — Validación y manejo de errores
+
+La aplicación valida campos obligatorios, números, rangos y fechas antes de guardar datos. Los errores de formularios se muestran en la página sin cerrar el programa, mientras que las APIs devuelven respuestas JSON controladas. La eliminación de materias está protegida cuando existen tareas o exámenes asociados. La base de datos se crea automáticamente cuando falta el archivo y los fallos de infraestructura se registran sin exponer trazas al usuario.
+
+La integración de una API de IA todavía no forma parte de los puntos implementados; cuando se incorpore, sus fallos deberán manejarse como errores de servicio y no como excepciones que detengan la aplicación.
 
 ## Punto 7 — Promedios
 

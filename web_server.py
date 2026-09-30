@@ -2,11 +2,14 @@
 from datetime import date
 from html import escape
 import json
+import logging
 from urllib.parse import parse_qs
 
 import analyzer
 import database
 import web_app
+
+LOGGER = logging.getLogger("studyflow.web_server")
 
 _ORIGINAL_APPLICATION = web_app.application
 
@@ -155,14 +158,26 @@ def application(environ, start_response):
             if not 0 <= attention < strength <= 100:
                 raise ValueError("Los umbrales deben cumplir 0 ≤ atención < fortaleza ≤ 100.")
             return web_app._html(start_response, _analysis_dashboard(environ))
-        except (ValueError, database.DatabaseError) as exc:
+        except ValueError as exc:
             return web_app._html(
                 start_response,
                 web_app._page(
-                    f"<section class='card'><h2>Error de configuración</h2><p>{escape(str(exc))}</p></section>",
-                    "Error",
+                    f"<section class='card error-page'><h2>Datos no válidos</h2><p>{escape(str(exc))}</p>"
+                    "<form method='get' action='/analysis'><button type='submit'>Volver al análisis</button></form></section>",
+                    "Datos no válidos",
                 ),
                 "400 Bad Request",
+            )
+        except database.DatabaseError as exc:
+            LOGGER.exception("Error de base de datos en /analysis")
+            return web_app._error_page(start_response, str(exc), "500 Internal Server Error", "Error de base de datos")
+        except Exception:
+            LOGGER.exception("Error inesperado en /analysis")
+            return web_app._error_page(
+                start_response,
+                "Ocurrió un error interno al generar el análisis.",
+                "500 Internal Server Error",
+                "Error interno",
             )
 
     if path == "/api/insights" and method == "GET":
@@ -181,10 +196,24 @@ def application(environ, start_response):
                 attention_threshold=attention,
             )
             return _json(start_response, report)
-        except (ValueError, database.DatabaseError) as exc:
+        except ValueError as exc:
             return _json(start_response, {"error": str(exc)}, "400 Bad Request")
+        except database.DatabaseError as exc:
+            return _json(start_response, {"error": str(exc)}, "500 Internal Server Error")
+        except Exception:
+            LOGGER.exception("Error inesperado en /api/insights")
+            return _json(start_response, {"error": "No se pudo generar el análisis."}, "500 Internal Server Error")
 
-    return _ORIGINAL_APPLICATION(environ, start_response)
+    try:
+        return _ORIGINAL_APPLICATION(environ, start_response)
+    except Exception:
+        LOGGER.exception("Error inesperado en la aplicación web")
+        return web_app._error_page(
+            start_response,
+            "Ocurrió un error interno. Tus datos guardados no se han eliminado.",
+            "500 Internal Server Error",
+            "Error interno",
+        )
 
 
 if __name__ == "__main__":

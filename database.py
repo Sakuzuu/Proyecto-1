@@ -49,21 +49,30 @@ class EvaluationNotFoundError(DatabaseError):
 def get_connection(database_path: DatabasePath = DATABASE_PATH) -> sqlite3.Connection:
     """Return a configured SQLite connection."""
     path = Path(database_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(path, timeout=5.0)
-    connection.row_factory = sqlite3.Row
-    connection.execute("PRAGMA foreign_keys = ON")
-    return connection
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        connection = sqlite3.connect(path, timeout=5.0)
+        connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA foreign_keys = ON")
+        return connection
+    except (OSError, sqlite3.Error) as exc:
+        raise DatabaseError("No se pudo abrir la base de datos.") from exc
 
 
 def initialize_database(database_path: DatabasePath = DATABASE_PATH) -> None:
     """Create the complete relational schema and mark its version."""
     if not SCHEMA_PATH.exists():
         raise DatabaseError(f"Database schema file not found: {SCHEMA_PATH}")
-    with get_connection(database_path) as connection:
-        connection.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
-        connection.execute("PRAGMA user_version = 1")
-        connection.commit()
+    try:
+        schema = SCHEMA_PATH.read_text(encoding="utf-8")
+        with get_connection(database_path) as connection:
+            connection.executescript(schema)
+            connection.execute("PRAGMA user_version = 1")
+            connection.commit()
+    except DatabaseError:
+        raise
+    except (OSError, sqlite3.Error) as exc:
+        raise DatabaseError("No se pudo inicializar la base de datos.") from exc
 
 
 def get_schema_version(database_path: DatabasePath = DATABASE_PATH) -> int:
