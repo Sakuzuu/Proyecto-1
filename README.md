@@ -14,7 +14,14 @@ Aplicación de Python para gestionar el estudio y analizar el rendimiento acadé
 **Punto 8 — Generador de plan de estudio:** completado.  
 **Punto 9 — Dashboard de rendimiento:** completado.  
 **Punto 10 — Visualizaciones académicas:** completado.  
-**Punto 11 — Detección de fortalezas y debilidades:** completado.  \n**Punto 15 — Validación y manejo de errores:** completado.
+**Punto 11 — Detección de fortalezas y debilidades:** completado.  \n**Punto 15 — Validación y manejo de errores:** completado.  
+**Punto 16 — Guardado automático:** completado.
+
+## Punto 16 — Guardado automático
+
+Los cambios de StudyFlow se confirman inmediatamente en SQLite. Las conexiones de la capa de datos se gestionan mediante context managers para que se cierren correctamente, y SQLite usa WAL con sincronización completa para reforzar la durabilidad local. La ruta de la base de datos puede configurarse mediante `STUDYFLOW_DATABASE_PATH`, lo que permite colocar el archivo en un almacenamiento persistente cuando el entorno de despliegue lo soporte.
+
+En el ordenador local, la base de datos se guarda en `data/studyflow.db` y puede recuperarse al volver a abrir el programa. En el servicio público actual de Render se mantiene la implementación SQLite, pero el plan Free utiliza un sistema de archivos efímero; por ello, la persistencia entre reinicios o despliegues de ese servicio requiere conectar posteriormente un almacenamiento persistente (por ejemplo, un persistent disk en un servicio de pago) o migrar la base de datos a un datastore administrado. citeturn776491search0turn776491search2
 
 ## Punto 15 — Validación y manejo de errores
 
