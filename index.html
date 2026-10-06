@@ -111,6 +111,20 @@
       <div id="averagesTable" class="table-wrap" aria-live="polite"></div>
     </section>
 
+
+<section class="card calendar-card" aria-labelledby="calendar-heading">
+  <div class="section-title-row">
+    <div><p class="eyebrow">CALENDARIO</p><h2 id="calendar-heading">Calendario de notas</h2><p class="muted">Cada nota queda asociada a una fecha durante esta sesión.</p></div>
+    <input id="calendarMonth" type="month" aria-label="Mes del calendario">
+  </div>
+  <div class="calendar-toolbar">
+    <button id="calendarPrevious" class="button button-secondary" type="button">← Anterior</button>
+    <h3 id="calendarTitle"></h3>
+    <button id="calendarNext" class="button button-secondary" type="button">Siguiente →</button>
+  </div>
+  <div id="calendar" aria-live="polite"></div>
+  <div id="calendarDetails" aria-live="polite"></div>
+</section>
     <footer>
       <p>StudyFlow · Esta versión no usa Python, servidores ni base de datos. Los datos existen únicamente mientras mantengas abierta la sesión.</p>
     </footer>

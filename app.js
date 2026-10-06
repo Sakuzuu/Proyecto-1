@@ -40,7 +40,7 @@
     return Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 100;
   }
   function isValidDate(value) {
-    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
     const date = new Date(value + "T00:00:00");
     return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
   }
@@ -53,6 +53,19 @@
     return [now.getFullYear(), String(now.getMonth()+1).padStart(2,"0"), String(now.getDate()).padStart(2,"0")].join("-");
   }
 
+  function getMonthKey(date) { return date.slice(0, 7) + "-01"; }
+  function shiftMonth(monthKey, delta) { const parts = monthKey.slice(0, 7).split("-").map(Number); const date = new Date(Date.UTC(parts[0], parts[1] - 1 + delta, 1)); return date.getUTCFullYear() + "-" + String(date.getUTCMonth() + 1).padStart(2, "0") + "-01"; }
+  function monthLabel(monthKey) { return new Intl.DateTimeFormat("es-EC", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(monthKey + "T00:00:00Z")); }
+  function buildCalendar(monthKey, grades, subjects, selectedDate) {
+    const parts=monthKey.slice(0,7).split("-").map(Number), year=parts[0], month=parts[1];
+    const days=new Date(Date.UTC(year,month,0)).getUTCDate(), first=(new Date(Date.UTC(year,month-1,1)).getUTCDay()+6)%7, names=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+    let html="<table class=\"calendar-table\"><thead><tr>"+names.map(function(n){return "<th scope=\"col\">"+n+"</th>";}).join("")+"</tr></thead><tbody><tr>";
+    for(let i=0;i<first;i++) html+="<td class=\"calendar-empty\"></td>";
+    for(let day=1;day<=days;day++){const dateKey=year+"-"+String(month).padStart(2,"0")+"-"+String(day).padStart(2,"0"),dayGrades=grades.filter(function(g){return g.date===dateKey;}),avg=calculateAverage(dayGrades.map(function(g){return g.value;})),classes=["calendar-day",dateKey===selectedDate?"selected":"",dayGrades.length?"has-notes":""].filter(Boolean).join(" ");let details="<span class=\"day-empty\">—</span>";if(dayGrades.length)details="<span class=\"day-note-count\">"+dayGrades.length+" nota"+(dayGrades.length===1?"":"s")+"</span><span class=\"day-average\">"+avg+"/100</span>";html+="<td><button type=\"button\" class=\""+classes+"\" data-calendar-date=\""+dateKey+"\"><span class=\"day-number\">"+day+"</span>"+details+"</button></td>";if((first+day)%7===0&&day!==days)html+="</tr><tr>"}
+    const used=(first+days)%7;if(used)for(let i=used;i<7;i++)html+="<td class=\"calendar-empty\"></td>";return html+"</tr></tbody></table>";
+  }
+  function buildDayDetails(dateKey, grades, subjects) { const dayGrades=grades.filter(function(g){return g.date===dateKey;}); if(!isValidDate(dateKey))return "<p class=\"empty\">Selecciona una fecha válida.</p>"; if(!dayGrades.length)return "<div class=\"calendar-detail-empty\"><strong>"+formatDate(dateKey)+"</strong><span>No hay notas registradas para este día.</span></div>"; const items=dayGrades.map(function(g){const subject=subjects.find(function(s){return s.id===g.subjectId;});return "<li><strong>"+escapeHtml(subject?subject.name:"Materia")+"</strong><span>"+g.value+"/100"+(g.label?" · "+escapeHtml(g.label):"")+"</span></li>";}).join(""); return "<div class=\"calendar-detail\"><div><strong>"+formatDate(dateKey)+"</strong><span>Promedio del día: "+calculateAverage(dayGrades.map(function(g){return g.value;}))+"/100</span></div><ul>"+items+"</ul></div>"; }
+
   function createState() {
     return {
       goal: 70,
@@ -60,7 +73,9 @@
       grades: [],
       nextSubjectId: 1,
       nextGradeId: 1,
-      theme: "light"
+      theme: "light",
+      selectedDate: getTodayDate(),
+      calendarMonth: getMonthKey(getTodayDate())
     };
   }
 
@@ -101,13 +116,16 @@
       noteCount: document.getElementById("noteCount"),
       subjectsList: document.getElementById("subjectsList"),
       gradesList: document.getElementById("gradesList"),
-      averagesTable: document.getElementById("averagesTable")
+      averagesTable: document.getElementById("averagesTable"),
+      calendarMonth: document.getElementById("calendarMonth"), calendar: document.getElementById("calendar"), calendarDetails: document.getElementById("calendarDetails"), calendarPrevious: document.getElementById("calendarPrevious"), calendarNext: document.getElementById("calendarNext"), calendarTitle: document.getElementById("calendarTitle")
     };
 
     const setError = (element, message) => {
       element.textContent = message;
       element.hidden = !message;
     };
+
+    const renderCalendar = () => { els.calendarMonth.value=state.calendarMonth.slice(0,7); els.calendarTitle.textContent=monthLabel(state.calendarMonth); els.calendar.innerHTML=buildCalendar(state.calendarMonth,state.grades,state.subjects,state.selectedDate); els.calendarDetails.innerHTML=buildDayDetails(state.selectedDate,state.grades,state.subjects); };
 
     const render = () => {
       document.documentElement.dataset.theme = state.theme;
@@ -189,7 +207,7 @@
         }).join("");
         els.averagesTable.innerHTML =
           `<table><thead><tr><th>Materia</th><th>Promedio</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table>`;
-      }
+      }      renderCalendar();
     };
 
     els.goalForm.addEventListener("submit", (event) => {
@@ -253,6 +271,8 @@
         label: normalizeName(els.gradeLabel.value),
         date
       });
+      state.selectedDate = date;
+      state.calendarMonth = getMonthKey(date);
       els.gradeValue.value = "";
       els.gradeLabel.value = "";
       els.gradeDate.value = getTodayDate();
@@ -278,6 +298,11 @@
       render();
     });
 
+    els.calendarMonth.addEventListener("change", () => { const value=els.calendarMonth.value; if(/^\d{4}-\d{2}$/.test(value)){state.calendarMonth=value+"-01";state.selectedDate=state.calendarMonth;renderCalendar();} });
+    els.calendarPrevious.addEventListener("click", () => { state.calendarMonth=shiftMonth(state.calendarMonth,-1); state.selectedDate=state.calendarMonth; renderCalendar(); });
+    els.calendarNext.addEventListener("click", () => { state.calendarMonth=shiftMonth(state.calendarMonth,1); state.selectedDate=state.calendarMonth; renderCalendar(); });
+    els.calendar.addEventListener("click", (event) => { const button=event.target.closest("[data-calendar-date]"); if(!button)return; state.selectedDate=button.dataset.calendarDate; renderCalendar(); });
+
     els.themeToggle.addEventListener("click", () => {
       state.theme = state.theme === "dark" ? "light" : "dark";
       render();
@@ -290,6 +315,8 @@
       state.nextSubjectId = 1;
       state.nextGradeId = 1;
       state.theme = "light";
+      state.selectedDate = getTodayDate();
+      state.calendarMonth = getMonthKey(state.selectedDate);
       setError(els.goalError, "");
       setError(els.subjectError, "");
       setError(els.gradeError, "");
@@ -297,6 +324,7 @@
       els.subjectName.focus();
     });
 
+    els.gradeDate.value = state.selectedDate;
     render();
     return { state, render, elements: els };
   }
@@ -313,6 +341,11 @@
     isValidDate,
     formatDate,
     getTodayDate,
+    getMonthKey,
+    shiftMonth,
+    monthLabel,
+    buildCalendar,
+    buildDayDetails,
     init
   };
   if (typeof document !== "undefined" && document.getElementById("goalForm")) init(document);

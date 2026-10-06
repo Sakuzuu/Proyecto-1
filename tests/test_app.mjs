@@ -79,12 +79,14 @@ class Element {
     this.value = "";
     this.className = "";
     this.dataset = {};
+    this.attrs = {};
   }
   addEventListener(type, fn) { (this.listeners[type] ??= []).push(fn); }
   dispatchEvent(event) {
     for (const fn of this.listeners[event.type] ?? []) fn({ preventDefault() {}, target: this });
     return true;
   }
+  setAttribute(key, value) { this.attrs[key] = String(value); }
   focus() {}
   closest(selector) {
     if (selector === "[data-delete-subject]" && this.dataset.deleteSubject) return this;
@@ -95,6 +97,7 @@ class Element {
 
 class Document {
   constructor(ids) {
+    this.documentElement = new Element("documentElement", "html");
     this.elements = new Map(ids.map(([id, tag]) => [id, new Element(id, tag)]));
   }
   getElementById(id) { return this.elements.get(id) ?? null; }
@@ -109,7 +112,7 @@ test("simula el flujo de la interfaz", () => {
     ["clearSession", "button"], ["themeToggle", "button"], ["overallAverage", "p"], ["gradeCount", "p"],
     ["goalDisplay", "p"], ["goalStatus", "div"], ["statusTitle", "p"],
     ["statusText", "p"], ["subjectCount", "span"], ["noteCount", "span"],
-    ["subjectsList", "div"], ["gradesList", "div"], ["averagesTable", "div"]
+    ["subjectsList", "div"], ["gradesList", "div"], ["averagesTable", "div"], ["calendarMonth", "input"], ["calendar", "div"], ["calendarDetails", "div"], ["calendarPrevious", "button"], ["calendarNext", "button"], ["calendarTitle", "h3"]
   ];
   const document = new Document(ids);
   const code = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
@@ -170,4 +173,23 @@ test("la interfaz incluye modo oscuro y calendario de notas", () => {
   assert.match(html, /id="themeToggle"/);
   assert.match(html, /id="gradeDate"[^>]*type="date"/);
   assert.match(css, /:root\[data-theme="dark"\]/);
+});
+
+test("el calendario renderiza notas por fecha", () => {
+  const grades = [{ subjectId: 1, value: 80, date: "2026-10-06", label: "Parcial" }, { subjectId: 1, value: 90, date: "2026-10-06", label: "Tarea" }];
+  const html = StudyFlow.buildCalendar("2026-10-01", grades, [{ id: 1, name: "Cálculo" }], "2026-10-06");
+  assert.match(html, /data-calendar-date="2026-10-06"/);
+  assert.match(html, /2 notas/);
+  assert.match(StudyFlow.buildDayDetails("2026-10-06", grades, [{ id: 1, name: "Cálculo" }]), /Promedio del día: 85\/100/);
+  assert.equal(StudyFlow.shiftMonth("2026-12-01", 1), "2027-01-01");
+});
+
+test("la interfaz incluye modo oscuro y calendario visual", () => {
+  const html = load("index.html");
+  const css = load("styles.css");
+  for (const id of ["themeToggle", "gradeDate", "calendarMonth", "calendar", "calendarPrevious", "calendarNext", "calendarDetails"]) assert.match(html, new RegExp("id=\"" + id + "\""));
+  assert.match(html, /type="date"/);
+  assert.match(html, /type="month"/);
+  assert.match(css, /:root\[data-theme="dark"\]/);
+  assert.match(css, /\.calendar-table/);
 });
