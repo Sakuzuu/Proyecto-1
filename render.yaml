@@ -1,8 +1,0 @@
-services:
-  - type: web
-    name: studyflow-browser
-    runtime: static
-    branch: main
-    buildCommand: "true"
-    staticPublishPath: .
-    autoDeployTrigger: commit

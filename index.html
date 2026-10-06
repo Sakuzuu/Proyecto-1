@@ -15,7 +15,7 @@
         <h1>Mi rendimiento académico</h1>
         <p class="subtitle">Registra tus materias y notas y calcula tu promedio al instante, directamente en el navegador.</p>
       </div>
-      <button id="clearSession" class="button button-secondary" type="button">Limpiar sesión</button>
+      <div class="hero-actions"><button id="themeToggle" class="button button-secondary" type="button" aria-pressed="false">🌙 Modo oscuro</button><button id="clearSession" class="button button-secondary" type="button">Limpiar sesión</button></div>
     </header>
 
     <section class="grid summary-grid" aria-labelledby="summary-title">
@@ -91,6 +91,8 @@
             <input id="gradeValue" name="gradeValue" type="number" min="0" max="100" step="0.01" placeholder="0–100" required disabled>
             <button id="addGrade" class="button" type="submit" disabled>Agregar nota</button>
           </div>
+          <label for="gradeDate">Fecha</label>
+          <input id="gradeDate" name="gradeDate" type="date" required>
           <label for="gradeLabel">Descripción <span class="muted">(opcional)</span></label>
           <input id="gradeLabel" name="gradeLabel" type="text" maxlength="60" placeholder="Ej. Parcial 1">
         </form>

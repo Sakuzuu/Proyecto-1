@@ -39,6 +39,19 @@
   function isValidGrade(value) {
     return Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 100;
   }
+  function isValidDate(value) {
+    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+    const date = new Date(value + "T00:00:00");
+    return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+  }
+  function formatDate(value) {
+    if (!isValidDate(value)) return "Sin fecha";
+    return new Intl.DateTimeFormat("es-EC", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(value + "T00:00:00"));
+  }
+  function getTodayDate() {
+    const now = new Date();
+    return [now.getFullYear(), String(now.getMonth()+1).padStart(2,"0"), String(now.getDate()).padStart(2,"0")].join("-");
+  }
 
   function createState() {
     return {
@@ -46,7 +59,8 @@
       subjects: [],
       grades: [],
       nextSubjectId: 1,
-      nextGradeId: 1
+      nextGradeId: 1,
+      theme: "light"
     };
   }
 
@@ -72,9 +86,11 @@
       gradeSubject: document.getElementById("gradeSubject"),
       gradeValue: document.getElementById("gradeValue"),
       gradeLabel: document.getElementById("gradeLabel"),
+      gradeDate: document.getElementById("gradeDate"),
       gradeError: document.getElementById("gradeError"),
       addGrade: document.getElementById("addGrade"),
       clearSession: document.getElementById("clearSession"),
+      themeToggle: document.getElementById("themeToggle"),
       overallAverage: document.getElementById("overallAverage"),
       gradeCount: document.getElementById("gradeCount"),
       goalDisplay: document.getElementById("goalDisplay"),
@@ -94,6 +110,9 @@
     };
 
     const render = () => {
+      document.documentElement.dataset.theme = state.theme;
+      els.themeToggle.setAttribute("aria-pressed", String(state.theme === "dark"));
+      els.themeToggle.textContent = state.theme === "dark" ? "☀️ Modo claro" : "🌙 Modo oscuro";
       els.goal.value = state.goal;
       els.goalDisplay.textContent = `${state.goal}/100`;
       els.subjectCount.textContent = String(state.subjects.length);
@@ -150,7 +169,7 @@
           const subject = state.subjects.find((item) => item.id === grade.subjectId);
           return `<div class="list-item"><div><strong>${grade.value}/100</strong><small>${
             escapeHtml(subject ? subject.name : "Materia")
-          } · ${escapeHtml(grade.label || "Sin descripción")}</small></div><button class="delete-button" type="button" data-delete-grade="${grade.id}">Eliminar</button></div>`;
+          } · ${escapeHtml(grade.label || "Sin descripción")} · ${escapeHtml(formatDate(grade.date))}</small></div><button class="delete-button" type="button" data-delete-grade="${grade.id}">Eliminar</button></div>`;
         }).join("");
       }
 
@@ -214,6 +233,7 @@
       }
       const subjectId = Number(els.gradeSubject.value);
       const value = Number(els.gradeValue.value);
+      const date = els.gradeDate.value;
       if (!state.subjects.some((subject) => subject.id === subjectId)) {
         setError(els.gradeError, "Selecciona una materia válida.");
         return;
@@ -222,14 +242,20 @@
         setError(els.gradeError, "La nota debe ser un número entre 0 y 100.");
         return;
       }
+      if (!isValidDate(date)) {
+        setError(els.gradeError, "Selecciona una fecha válida.");
+        return;
+      }
       state.grades.push({
         id: state.nextGradeId++,
         subjectId,
         value: round(value),
-        label: normalizeName(els.gradeLabel.value)
+        label: normalizeName(els.gradeLabel.value),
+        date
       });
       els.gradeValue.value = "";
       els.gradeLabel.value = "";
+      els.gradeDate.value = getTodayDate();
       setError(els.gradeError, "");
       render();
       els.gradeValue.focus();
@@ -252,12 +278,18 @@
       render();
     });
 
+    els.themeToggle.addEventListener("click", () => {
+      state.theme = state.theme === "dark" ? "light" : "dark";
+      render();
+    });
+
     els.clearSession.addEventListener("click", () => {
       state.goal = 70;
       state.subjects = [];
       state.grades = [];
       state.nextSubjectId = 1;
       state.nextGradeId = 1;
+      state.theme = "light";
       setError(els.goalError, "");
       setError(els.subjectError, "");
       setError(els.gradeError, "");
@@ -278,6 +310,9 @@
     isValidGoal,
     isValidGrade,
     normalizeName,
+    isValidDate,
+    formatDate,
+    getTodayDate,
     init
   };
   if (typeof document !== "undefined" && document.getElementById("goalForm")) init(document);

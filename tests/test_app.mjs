@@ -43,6 +43,8 @@ test("valida meta y notas dentro de 0 a 100", () => {
   assert.equal(StudyFlow.isValidGrade(0), true);
   assert.equal(StudyFlow.isValidGrade(100), true);
   assert.equal(StudyFlow.isValidGrade("abc"), false);
+  assert.equal(StudyFlow.isValidDate("2026-10-06"), true);
+  assert.equal(StudyFlow.isValidDate("2026-02-30"), false);
 });
 
 test("normaliza nombres correctamente", () => {
@@ -103,8 +105,8 @@ test("simula el flujo de la interfaz", () => {
     ["goalForm", "form"], ["goal", "input"], ["goalError", "p"],
     ["subjectForm", "form"], ["subjectName", "input"], ["subjectError", "p"],
     ["gradeForm", "form"], ["gradeSubject", "select"], ["gradeValue", "input"],
-    ["gradeLabel", "input"], ["gradeError", "p"], ["addGrade", "button"],
-    ["clearSession", "button"], ["overallAverage", "p"], ["gradeCount", "p"],
+    ["gradeLabel", "input"], ["gradeDate", "input"], ["gradeError", "p"], ["addGrade", "button"],
+    ["clearSession", "button"], ["themeToggle", "button"], ["overallAverage", "p"], ["gradeCount", "p"],
     ["goalDisplay", "p"], ["goalStatus", "div"], ["statusTitle", "p"],
     ["statusText", "p"], ["subjectCount", "span"], ["noteCount", "span"],
     ["subjectsList", "div"], ["gradesList", "div"], ["averagesTable", "div"]
@@ -155,4 +157,17 @@ test("simula el flujo de la interfaz", () => {
   assert.equal(app.state.grades.length, 0);
   assert.equal(document.getElementById("overallAverage").textContent, "—");
   assert.equal(document.getElementById("gradeSubject").disabled, true);
+});
+
+test("formatea correctamente una fecha de nota", () => {
+  assert.equal(StudyFlow.formatDate("2026-10-06"), "06/10/2026");
+  assert.equal(StudyFlow.formatDate("no-date"), "Sin fecha");
+});
+
+test("la interfaz incluye modo oscuro y calendario de notas", () => {
+  const html = load("index.html");
+  const css = load("styles.css");
+  assert.match(html, /id="themeToggle"/);
+  assert.match(html, /id="gradeDate"[^>]*type="date"/);
+  assert.match(css, /:root\[data-theme="dark"\]/);
 });
