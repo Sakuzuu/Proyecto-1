@@ -1,4 +1,4 @@
-name: StudyFlow tests
+name: StudyFlow browser tests
 
 on:
   push:
@@ -11,9 +11,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: "3.12"
-      - name: Run tests
-        run: python -m unittest discover -s tests -v
+          node-version: "22"
+      - name: Run JavaScript tests
+        run: node --test tests/test_app.mjs

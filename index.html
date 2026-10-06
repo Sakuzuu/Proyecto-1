@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="StudyFlow: materias, notas y promedio académico durante la sesión.">
+  <title>StudyFlow · Rendimiento académico</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">STUDYFLOW</p>
+        <h1>Mi rendimiento académico</h1>
+        <p class="subtitle">Registra tus materias y notas y calcula tu promedio al instante, directamente en el navegador.</p>
+      </div>
+      <button id="clearSession" class="button button-secondary" type="button">Limpiar sesión</button>
+    </header>
+
+    <section class="grid summary-grid" aria-labelledby="summary-title">
+      <article class="card metric-card">
+        <div class="card-heading"><span id="summary-title">Promedio general</span><span class="icon">Σ</span></div>
+        <p id="overallAverage" class="metric">—</p>
+        <p id="gradeCount" class="muted">Sin notas registradas</p>
+      </article>
+      <article class="card metric-card">
+        <div class="card-heading"><span>Meta elegida</span><span class="icon">◎</span></div>
+        <p id="goalDisplay" class="metric">70/100</p>
+        <p class="muted">Puedes cambiarla cuando quieras.</p>
+      </article>
+      <article id="goalStatus" class="card status-card status-neutral" aria-live="polite">
+        <div class="card-heading"><span>Estado</span><span class="icon">!</span></div>
+        <p id="statusTitle" class="status-title">Añade una nota para empezar.</p>
+        <p id="statusText" class="muted">El aviso aparecerá automáticamente cuando haya un promedio que comparar.</p>
+      </article>
+    </section>
+
+    <section class="card" aria-labelledby="goal-section-title">
+      <div class="section-title-row">
+        <div>
+          <p class="eyebrow">PASO 1</p>
+          <h2 id="goal-section-title">Define tu meta</h2>
+        </div>
+        <span class="pill">Durante esta sesión</span>
+      </div>
+      <form id="goalForm" class="inline-form">
+        <label for="goal">Promedio mínimo que quieres alcanzar</label>
+        <div class="input-action">
+          <input id="goal" name="goal" type="number" min="0" max="100" step="0.1" value="70" required>
+          <span>/ 100</span>
+          <button class="button" type="submit">Guardar meta</button>
+        </div>
+      </form>
+      <p id="goalError" class="form-error" role="alert" hidden></p>
+    </section>
+
+    <section class="grid workspace-grid">
+      <article class="card" aria-labelledby="subjects-title">
+        <div class="section-title-row">
+          <div>
+            <p class="eyebrow">PASO 2</p>
+            <h2 id="subjects-title">Materias</h2>
+          </div>
+          <span id="subjectCount" class="pill">0</span>
+        </div>
+        <form id="subjectForm" class="stack-form">
+          <label for="subjectName">Nombre de la materia</label>
+          <div class="input-action">
+            <input id="subjectName" name="subjectName" type="text" maxlength="60" placeholder="Ej. Cálculo" required>
+            <button class="button" type="submit">Agregar</button>
+          </div>
+        </form>
+        <p id="subjectError" class="form-error" role="alert" hidden></p>
+        <div id="subjectsList" class="list" aria-live="polite"></div>
+      </article>
+
+      <article class="card" aria-labelledby="grades-title">
+        <div class="section-title-row">
+          <div>
+            <p class="eyebrow">PASO 3</p>
+            <h2 id="grades-title">Notas</h2>
+          </div>
+          <span id="noteCount" class="pill">0</span>
+        </div>
+        <form id="gradeForm" class="stack-form">
+          <label for="gradeSubject">Materia</label>
+          <select id="gradeSubject" name="gradeSubject" required></select>
+          <label for="gradeValue">Nota</label>
+          <div class="input-action">
+            <input id="gradeValue" name="gradeValue" type="number" min="0" max="100" step="0.01" placeholder="0–100" required disabled>
+            <button id="addGrade" class="button" type="submit" disabled>Agregar nota</button>
+          </div>
+          <label for="gradeLabel">Descripción <span class="muted">(opcional)</span></label>
+          <input id="gradeLabel" name="gradeLabel" type="text" maxlength="60" placeholder="Ej. Parcial 1">
+        </form>
+        <p id="gradeError" class="form-error" role="alert" hidden></p>
+        <div id="gradesList" class="list" aria-live="polite"></div>
+      </article>
+    </section>
+
+    <section class="card" aria-labelledby="averages-title">
+      <div class="section-title-row">
+        <div>
+          <p class="eyebrow">RESULTADO</p>
+          <h2 id="averages-title">Promedio por materia</h2>
+        </div>
+      </div>
+      <div id="averagesTable" class="table-wrap" aria-live="polite"></div>
+    </section>
+
+    <footer>
+      <p>StudyFlow · Esta versión no usa Python, servidores ni base de datos. Los datos existen únicamente mientras mantengas abierta la sesión.</p>
+    </footer>
+  </main>
+  <script src="app.js" defer></script>
+</body>
+</html>
