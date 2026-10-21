@@ -101,9 +101,9 @@ test("el esquema limita los perfiles al propietario y activa RLS", () => {
 test("la configuración no contiene credenciales y la guía explica el setup", () => {
   const config = fs.readFileSync(path.join(repoRoot, "supabase-config.js"), "utf8");
   const guide = fs.readFileSync(path.join(repoRoot, "supabase", "README.md"), "utf8");
-  assert.match(config, /url: \"\"/);
-  assert.match(config, /publishableKey: \"\"/);
-  assert.doesNotMatch(config, /service_role_[A-Za-z0-9_-]{8,}/);
+  assert.match(config, /url: "https:\/\/liuogfkzppxevvaclvpl\.supabase\.co"/);
+  assert.match(config, /publishableKey: "sb_publishable_[A-Za-z0-9_-]+"/);
+  assert.doesNotMatch(config, /(?:service_role_|sb_secret_)[A-Za-z0-9_-]{8,}/);
   assert.match(guide, /schema\.sql/);
   assert.match(guide, /Redirect URLs/);
 });
