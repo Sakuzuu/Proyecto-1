@@ -23,6 +23,27 @@
     return calculateAverage(grades.map((grade) => grade.value));
   }
 
+  function calculateAnnualAverage(academicYear, grades) {
+    return calculateAverage(grades.filter((grade) => grade.academicYear === academicYear).map((grade) => grade.value));
+  }
+
+  function calculateAnnualAverages(grades) {
+    return [...new Set(grades.map((grade) => grade.academicYear).filter(Boolean))]
+      .sort((a, b) => b.localeCompare(a))
+      .map((academicYear) => ({ academicYear, average: calculateAnnualAverage(academicYear, grades) }));
+  }
+
+  function isValidAcademicYear(value) {
+    return /^\d{4}-\d{4}$/.test(String(value || "").trim());
+  }
+
+  function getDefaultAcademicYear(dateValue) {
+    const date = isValidDate(dateValue) ? new Date(dateValue + "T00:00:00") : new Date();
+    let year = date.getFullYear();
+    if (date.getMonth() < 6) year -= 1;
+    return year + "-" + (year + 1);
+  }
+
   function evaluateGoal(average, goal) {
     if (average === null) return "empty";
     return average < goal ? "below" : "met";
@@ -90,6 +111,9 @@
 
   function init(document) {
     const state = createState();
+    let cloudService = null;
+    let cloudUserId = null;
+    let cloudReady = false;
     const els = {
       goalForm: document.getElementById("goalForm"),
       goal: document.getElementById("goal"),
@@ -102,6 +126,7 @@
       gradeValue: document.getElementById("gradeValue"),
       gradeLabel: document.getElementById("gradeLabel"),
       gradeDate: document.getElementById("gradeDate"),
+      academicYear: document.getElementById("academicYear"),
       gradeError: document.getElementById("gradeError"),
       addGrade: document.getElementById("addGrade"),
       clearSession: document.getElementById("clearSession"),
@@ -117,12 +142,60 @@
       subjectsList: document.getElementById("subjectsList"),
       gradesList: document.getElementById("gradesList"),
       averagesTable: document.getElementById("averagesTable"),
+      annualAveragesTable: document.getElementById("annualAveragesTable"),
+      cloudSyncStatus: document.getElementById("cloudSyncStatus"),
       calendarMonth: document.getElementById("calendarMonth"), calendar: document.getElementById("calendar"), calendarDetails: document.getElementById("calendarDetails"), calendarPrevious: document.getElementById("calendarPrevious"), calendarNext: document.getElementById("calendarNext"), calendarTitle: document.getElementById("calendarTitle")
     };
 
     const setError = (element, message) => {
       element.textContent = message;
       element.hidden = !message;
+    };
+
+    const setCloudStatus = (message, kind) => {
+      if (!els.cloudSyncStatus) return;
+      els.cloudSyncStatus.textContent = message || "";
+      els.cloudSyncStatus.className = "cloud-sync-status" + (kind ? " is-" + kind : "");
+      els.cloudSyncStatus.hidden = !message;
+    };
+
+    const connectCloud = async (service, userId) => {
+      if (!service || !userId) return { error: new Error("No hay una sesión válida para sincronizar.") };
+      cloudService = service;
+      cloudUserId = userId;
+      cloudReady = false;
+      setCloudStatus("Conectando y cargando tus datos académicos…", "loading");
+      let response;
+      try { response = await service.loadAcademicData(userId); }
+      catch (error) { setCloudStatus("No se pudieron cargar los datos de la nube. Recarga la página e inténtalo de nuevo.", "error"); return { error }; }
+      if (response.error || !response.data) {
+        setCloudStatus("No se pudieron cargar tus datos académicos. Revisa la conexión e inténtalo de nuevo.", "error");
+        return { error: response.error || new Error("No se recibieron datos académicos.") };
+      }
+      state.subjects = (response.data.subjects || []).map((subject) => ({ id: subject.id, name: subject.name }));
+      state.grades = (response.data.grades || []).map((grade) => ({
+        id: grade.id, subjectId: grade.subject_id, value: Number(grade.value),
+        label: grade.label || "", date: grade.grade_date, academicYear: grade.academic_year
+      }));
+      state.nextSubjectId = 1;
+      state.nextGradeId = 1;
+      cloudReady = true;
+      render();
+      setCloudStatus("Sincronizado con tu cuenta. Las materias y notas se guardan en la nube.", "success");
+      return { data: { subjects: state.subjects.length, grades: state.grades.length }, error: null };
+    };
+
+    const disconnectCloud = () => {
+      cloudService = null;
+      cloudUserId = null;
+      cloudReady = false;
+      state.subjects = [];
+      state.grades = [];
+      state.nextSubjectId = 1;
+      state.nextGradeId = 1;
+      setCloudStatus("", "");
+      render();
+      return true;
     };
 
     const renderCalendar = () => { els.calendarMonth.value=state.calendarMonth.slice(0,7); els.calendarTitle.textContent=monthLabel(state.calendarMonth); els.calendar.innerHTML=buildCalendar(state.calendarMonth,state.grades,state.subjects,state.selectedDate); els.calendarDetails.innerHTML=buildDayDetails(state.selectedDate,state.grades,state.subjects); };
@@ -207,7 +280,16 @@
         }).join("");
         els.averagesTable.innerHTML =
           `<table><thead><tr><th>Materia</th><th>Promedio</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table>`;
-      }      renderCalendar();
+      }
+
+      const annualAverages = calculateAnnualAverages(state.grades);
+      if (annualAverages.length === 0) {
+        els.annualAveragesTable.innerHTML = '<p class="table-empty">Las notas que registres se agruparán aquí por año académico.</p>';
+      } else {
+        const annualRows = annualAverages.map((item) => `<tr><td><strong>${escapeHtml(item.academicYear)}</strong></td><td>${item.average === null ? "—" : item.average + "/100"}</td><td>${item.average === null ? "Sin notas" : "Promedio calculado"}</td></tr>`).join("");
+        els.annualAveragesTable.innerHTML = `<table><thead><tr><th>Año académico</th><th>Promedio anual</th><th>Estado</th></tr></thead><tbody>${annualRows}</tbody></table>`;
+      }
+      renderCalendar();
     };
 
     els.goalForm.addEventListener("submit", (event) => {
@@ -222,7 +304,7 @@
       render();
     });
 
-    els.subjectForm.addEventListener("submit", (event) => {
+    els.subjectForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       const name = normalizeName(els.subjectName.value);
       if (!name) {
@@ -236,24 +318,50 @@
         setError(els.subjectError, "Esa materia ya está registrada.");
         return;
       }
-      state.subjects.push({ id: state.nextSubjectId++, name });
+      if (cloudService && !cloudReady) {
+        setError(els.subjectError, "Espera a que termine la sincronización antes de modificar materias.");
+        return;
+      }
+      let subject = { id: state.nextSubjectId++, name };
+      if (cloudService) {
+        let result;
+        try { result = await cloudService.addSubject(cloudUserId, name); }
+        catch (_) { result = { error: new Error("No se pudo guardar la materia en la nube.") }; }
+        if (result.error || !result.data) {
+          setError(els.subjectError, "No se pudo guardar la materia. Comprueba tu conexión e inténtalo de nuevo.");
+          return;
+        }
+        subject = { id: result.data.id, name: result.data.name };
+      }
+      state.subjects.push(subject);
       els.subjectName.value = "";
       setError(els.subjectError, "");
       render();
       els.subjectName.focus();
     });
 
-    els.gradeForm.addEventListener("submit", (event) => {
+    els.gradeForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (state.subjects.length === 0) {
         setError(els.gradeError, "Primero agrega una materia.");
         return;
       }
-      const subjectId = Number(els.gradeSubject.value);
+      const rawSubjectId = els.gradeSubject.value;
       const value = Number(els.gradeValue.value);
       const date = els.gradeDate.value;
-      if (!state.subjects.some((subject) => subject.id === subjectId)) {
+      const academicYear = normalizeName(els.academicYear.value);
+      const selectedSubject = state.subjects.find((subject) => String(subject.id) === String(rawSubjectId));
+      if (!selectedSubject) {
         setError(els.gradeError, "Selecciona una materia válida.");
+        return;
+      }
+      const subjectId = selectedSubject.id;
+      if (cloudService && !cloudReady) {
+        setError(els.gradeError, "Espera a que termine la sincronización antes de agregar notas.");
+        return;
+      }
+      if (!isValidAcademicYear(academicYear)) {
+        setError(els.gradeError, "El año académico debe tener el formato AAAA-AAAA, por ejemplo 2026-2027.");
         return;
       }
       if (!isValidGrade(value)) {
@@ -264,38 +372,80 @@
         setError(els.gradeError, "Selecciona una fecha válida.");
         return;
       }
-      state.grades.push({
+      let grade = {
         id: state.nextGradeId++,
         subjectId,
         value: round(value),
         label: normalizeName(els.gradeLabel.value),
-        date
-      });
+        date,
+        academicYear
+      };
+      if (cloudService) {
+        let result;
+        try { result = await cloudService.addGrade(cloudUserId, grade); }
+        catch (_) { result = { error: new Error("No se pudo guardar la nota en la nube.") }; }
+        if (result.error || !result.data) {
+          setError(els.gradeError, "No se pudo guardar la nota. Comprueba tu conexión e inténtalo de nuevo.");
+          return;
+        }
+        grade = { id: result.data.id, subjectId: result.data.subject_id, value: Number(result.data.value), label: result.data.label || "", date: result.data.grade_date, academicYear: result.data.academic_year };
+      }
+      state.grades.push(grade);
       state.selectedDate = date;
       state.calendarMonth = getMonthKey(date);
       els.gradeValue.value = "";
       els.gradeLabel.value = "";
       els.gradeDate.value = getTodayDate();
+      els.academicYear.value = getDefaultAcademicYear(els.gradeDate.value);
+      lastSuggestedAcademicYear = els.academicYear.value;
       setError(els.gradeError, "");
       render();
       els.gradeValue.focus();
     });
 
-    els.subjectsList.addEventListener("click", (event) => {
+    els.subjectsList.addEventListener("click", async (event) => {
       const button = event.target.closest("[data-delete-subject]");
       if (!button) return;
-      const id = Number(button.dataset.deleteSubject);
-      state.subjects = state.subjects.filter((subject) => subject.id !== id);
-      state.grades = state.grades.filter((grade) => grade.subjectId !== id);
+      const id = button.dataset.deleteSubject;
+      if (cloudService && !cloudReady) {
+        setCloudStatus("Espera a que termine la sincronización antes de eliminar materias.", "error");
+        return;
+      }
+      if (cloudService) {
+        let result;
+        try { result = await cloudService.deleteSubject(cloudUserId, id); }
+        catch (_) { result = { error: new Error("No se pudo eliminar la materia.") }; }
+        if (result.error) {
+          setCloudStatus("No se pudo eliminar la materia de la nube. Vuelve a intentarlo.", "error");
+          return;
+        }
+      }
+      state.subjects = state.subjects.filter((subject) => String(subject.id) !== String(id));
+      state.grades = state.grades.filter((grade) => String(grade.subjectId) !== String(id));
       render();
+      if (cloudService) setCloudStatus("Materia eliminada y cambios sincronizados.", "success");
     });
 
-    els.gradesList.addEventListener("click", (event) => {
+    els.gradesList.addEventListener("click", async (event) => {
       const button = event.target.closest("[data-delete-grade]");
       if (!button) return;
-      const id = Number(button.dataset.deleteGrade);
-      state.grades = state.grades.filter((grade) => grade.id !== id);
+      const id = button.dataset.deleteGrade;
+      if (cloudService && !cloudReady) {
+        setCloudStatus("Espera a que termine la sincronización antes de eliminar notas.", "error");
+        return;
+      }
+      if (cloudService) {
+        let result;
+        try { result = await cloudService.deleteGrade(cloudUserId, id); }
+        catch (_) { result = { error: new Error("No se pudo eliminar la nota.") }; }
+        if (result.error) {
+          setCloudStatus("No se pudo eliminar la nota de la nube. Vuelve a intentarlo.", "error");
+          return;
+        }
+      }
+      state.grades = state.grades.filter((grade) => String(grade.id) !== String(id));
       render();
+      if (cloudService) setCloudStatus("Nota eliminada y cambios sincronizados.", "success");
     });
 
     els.calendarMonth.addEventListener("change", () => { const value=els.calendarMonth.value; if(/^\d{4}-\d{2}$/.test(value)){state.calendarMonth=value+"-01";state.selectedDate=state.calendarMonth;renderCalendar();} });
@@ -303,12 +453,23 @@
     els.calendarNext.addEventListener("click", () => { state.calendarMonth=shiftMonth(state.calendarMonth,1); state.selectedDate=state.calendarMonth; renderCalendar(); });
     els.calendar.addEventListener("click", (event) => { const button=event.target.closest("[data-calendar-date]"); if(!button)return; state.selectedDate=button.dataset.calendarDate; renderCalendar(); });
 
+    let lastSuggestedAcademicYear = getDefaultAcademicYear(state.selectedDate);
+    els.gradeDate.addEventListener("change", () => {
+      const suggestion = getDefaultAcademicYear(els.gradeDate.value);
+      if (!els.academicYear.value || els.academicYear.value === lastSuggestedAcademicYear) els.academicYear.value = suggestion;
+      lastSuggestedAcademicYear = suggestion;
+    });
+
     els.themeToggle.addEventListener("click", () => {
       state.theme = state.theme === "dark" ? "light" : "dark";
       render();
     });
 
     els.clearSession.addEventListener("click", () => {
+      if (cloudService) {
+        setCloudStatus("Las notas de una cuenta se conservan en la nube. Cierra sesión para salir o elimina los registros individualmente.", "error");
+        return;
+      }
       state.goal = 70;
       state.subjects = [];
       state.grades = [];
@@ -325,8 +486,12 @@
     });
 
     els.gradeDate.value = state.selectedDate;
+    els.academicYear.value = getDefaultAcademicYear(state.selectedDate);
     render();
-    return { state, render, elements: els };
+    return {
+      state, render, elements: els, connectCloud, disconnectCloud,
+      getCloudStatus: () => ({ connected: Boolean(cloudService), ready: cloudReady, userId: cloudUserId })
+    };
   }
 
   const api = {
@@ -334,6 +499,10 @@
     calculateAverage,
     calculateSubjectAverage,
     calculateOverallAverage,
+    calculateAnnualAverage,
+    calculateAnnualAverages,
+    isValidAcademicYear,
+    getDefaultAcademicYear,
     evaluateGoal,
     isValidGoal,
     isValidGrade,
@@ -348,6 +517,9 @@
     buildDayDetails,
     init
   };
-  if (typeof document !== "undefined" && document.getElementById("goalForm")) init(document);
+  if (typeof document !== "undefined" && document.getElementById("goalForm")) {
+    const instance = init(document);
+    if (typeof globalThis !== "undefined") globalThis.StudyFlowApp = instance;
+  }
   return api;
 });

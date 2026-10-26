@@ -103,16 +103,16 @@ class Document {
   getElementById(id) { return this.elements.get(id) ?? null; }
 }
 
-test("simula el flujo de la interfaz", () => {
+test("simula el flujo de la interfaz", async () => {
   const ids = [
     ["goalForm", "form"], ["goal", "input"], ["goalError", "p"],
     ["subjectForm", "form"], ["subjectName", "input"], ["subjectError", "p"],
     ["gradeForm", "form"], ["gradeSubject", "select"], ["gradeValue", "input"],
-    ["gradeLabel", "input"], ["gradeDate", "input"], ["gradeError", "p"], ["addGrade", "button"],
+    ["gradeLabel", "input"], ["gradeDate", "input"], ["academicYear", "input"], ["gradeError", "p"], ["addGrade", "button"],
     ["clearSession", "button"], ["themeToggle", "button"], ["overallAverage", "p"], ["gradeCount", "p"],
     ["goalDisplay", "p"], ["goalStatus", "div"], ["statusTitle", "p"],
     ["statusText", "p"], ["subjectCount", "span"], ["noteCount", "span"],
-    ["subjectsList", "div"], ["gradesList", "div"], ["averagesTable", "div"], ["calendarMonth", "input"], ["calendar", "div"], ["calendarDetails", "div"], ["calendarPrevious", "button"], ["calendarNext", "button"], ["calendarTitle", "h3"]
+    ["subjectsList", "div"], ["gradesList", "div"], ["averagesTable", "div"], ["annualAveragesTable", "div"], ["cloudSyncStatus", "p"], ["calendarMonth", "input"], ["calendar", "div"], ["calendarDetails", "div"], ["calendarPrevious", "button"], ["calendarNext", "button"], ["calendarTitle", "h3"]
   ];
   const document = new Document(ids);
   const code = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
@@ -160,6 +160,25 @@ test("simula el flujo de la interfaz", () => {
   assert.equal(app.state.grades.length, 0);
   assert.equal(document.getElementById("overallAverage").textContent, "—");
   assert.equal(document.getElementById("gradeSubject").disabled, true);
+
+  const cloud = {
+    loadAcademicData: async userId => ({
+      data: {
+        subjects: [{ id: "subject-uuid", name: "Cálculo" }],
+        grades: [{ id: "grade-uuid", subject_id: "subject-uuid", value: "88.5", label: "Parcial", grade_date: "2026-10-06", academic_year: "2026-2027" }]
+      },
+      error: null
+    })
+  };
+  const connected = await app.connectCloud(cloud, "user-uuid");
+  assert.equal(connected.error, null);
+  assert.deepEqual(app.state.subjects.map(s => s.id), ["subject-uuid"]);
+  assert.deepEqual(app.state.grades.map(g => [g.subjectId, g.value, g.academicYear]), [["subject-uuid", 88.5, "2026-2027"]]);
+  assert.match(document.getElementById("cloudSyncStatus").textContent, /Sincronizado/);
+  assert.match(document.getElementById("annualAveragesTable").innerHTML, /88.5\/100/);
+  app.disconnectCloud();
+  assert.equal(app.state.subjects.length, 0);
+  assert.equal(app.state.grades.length, 0);
 });
 
 test("formatea correctamente una fecha de nota", () => {
@@ -192,4 +211,20 @@ test("la interfaz incluye modo oscuro y calendario visual", () => {
   assert.match(html, /type="month"/);
   assert.match(css, /:root\[data-theme="dark"\]/);
   assert.match(css, /\.calendar-table/);
+});
+test("calcula promedios por año académico y valida el formato", () => {
+  const grades = [
+    { value: 80, academicYear: "2025-2026" },
+    { value: 90, academicYear: "2025-2026" },
+    { value: 70, academicYear: "2026-2027" }
+  ];
+  assert.equal(StudyFlow.calculateAnnualAverage("2025-2026", grades), 85);
+  assert.deepEqual(StudyFlow.calculateAnnualAverages(grades), [
+    { academicYear: "2026-2027", average: 70 },
+    { academicYear: "2025-2026", average: 85 }
+  ]);
+  assert.equal(StudyFlow.isValidAcademicYear("2026-2027"), true);
+  assert.equal(StudyFlow.isValidAcademicYear("2026"), false);
+  assert.equal(StudyFlow.getDefaultAcademicYear("2026-10-26"), "2026-2027");
+  assert.equal(StudyFlow.getDefaultAcademicYear("2026-04-10"), "2025-2026");
 });

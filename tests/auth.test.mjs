@@ -19,7 +19,10 @@ function mockClient() {
       signOut: async () => { calls.push(["signOut"]); return { error: null }; },
       onAuthStateChange: callback => { calls.push(["onAuthStateChange", callback]); return { data: { subscription: { unsubscribe() {} } } }; }
     },
-    from: table => ({ select: columns => ({ eq: (column, id) => ({ maybeSingle: async () => { calls.push(["profile", table, columns, column, id]); return { data: id === profile.id ? profile : null, error: null }; } }) }) })
+    from: table => ({
+      select: columns => ({ eq: (column, id) => ({ maybeSingle: async () => { calls.push(["profile", table, columns, column, id]); return { data: id === profile.id ? profile : null, error: null }; } }) }),
+      update: payload => ({ eq: (column, id) => ({ select: columns => ({ single: async () => { calls.push(["updateProfile", table, payload, column, id, columns]); return { data: { id, ...payload }, error: null }; } }) }) })
+    })
   };
 }
 const goodFields = { displayName: "Isaac Paz", username: "Isaac_123", email: "ISAAC@example.com", password: "correct horse battery", confirmPassword: "correct horse battery" };
@@ -72,7 +75,7 @@ test("recuperación y cambio de contraseña", async () => {
 test("el perfil se consulta por el ID autenticado", async () => {
   const client = mockClient(), service = Auth.createService(client);
   assert.equal((await service.getProfile("user-1")).data.username, "isaac_123");
-  assert.deepEqual(client.calls[0], ["profile", "profiles", "id, username, display_name, created_at", "id", "user-1"]);
+  assert.deepEqual(client.calls[0], ["profile", "profiles", "id, username, display_name, share_academic_averages, created_at", "id", "user-1"]);
   assert.match((await service.getProfile("")).error.message, /sesión/);
 });
 test("valida configuración y rechaza claves privilegiadas", () => {
@@ -114,4 +117,12 @@ test("detecta enlaces de recuperación en query y hash", () => {
   assert.equal(Auth.isPasswordRecoveryUrl("https://example.com/Proyecto-1/#access_token=abc&type=recovery"), true);
   assert.equal(Auth.isPasswordRecoveryUrl("https://example.com/Proyecto-1/#access_token=abc&type=signup"), false);
   assert.equal(Auth.isPasswordRecoveryUrl("not a url"), false);
+});
+
+test("guarda la preferencia de privacidad del promedio en el perfil", async () => {
+  const client = mockClient(), service = Auth.createService(client);
+  const result = await service.updateSharingPreference("user-1", true);
+  assert.equal(result.error, null);
+  assert.equal(result.data.share_academic_averages, true);
+  assert.deepEqual(client.calls[0], ["updateProfile", "profiles", { share_academic_averages: true }, "id", "user-1", "id, share_academic_averages"]);
 });

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="StudyFlow: materias, notas y promedio académico durante la sesión.">
+  <meta name="description" content="StudyFlow: organiza materias y notas, calcula promedios y sincroniza tus datos académicos.">
   <title>StudyFlow · Rendimiento académico</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -17,6 +17,7 @@
       </div>
       <div class="hero-actions"><button id="themeToggle" class="button button-secondary" type="button" aria-pressed="false">🌙 Modo oscuro</button><button id="clearSession" class="button button-secondary" type="button">Limpiar sesión</button></div>
     </header>
+    <p id="cloudSyncStatus" class="cloud-sync-status" hidden role="status"></p>
 
     <section class="grid summary-grid" aria-labelledby="summary-title">
       <article class="card metric-card">
@@ -93,6 +94,9 @@
           </div>
           <label for="gradeDate">Fecha</label>
           <input id="gradeDate" name="gradeDate" type="date" required>
+          <label for="academicYear">Año académico</label>
+          <input id="academicYear" name="academicYear" type="text" minlength="9" maxlength="9" pattern="[0-9]{4}-[0-9]{4}" placeholder="2026-2027" aria-describedby="academicYearHelp" required>
+          <small id="academicYearHelp" class="muted">Usa el período académico de tu institución, por ejemplo 2026-2027.</small>
           <label for="gradeLabel">Descripción <span class="muted">(opcional)</span></label>
           <input id="gradeLabel" name="gradeLabel" type="text" maxlength="60" placeholder="Ej. Parcial 1">
         </form>
@@ -111,6 +115,16 @@
       <div id="averagesTable" class="table-wrap" aria-live="polite"></div>
     </section>
 
+    <section class="card" aria-labelledby="annual-averages-title">
+      <div class="section-title-row">
+        <div>
+          <p class="eyebrow">EVOLUCIÓN</p>
+          <h2 id="annual-averages-title">Promedio por año académico</h2>
+          <p class="muted">Se calcula con las notas registradas en cada período.</p>
+        </div>
+      </div>
+      <div id="annualAveragesTable" class="table-wrap" aria-live="polite"></div>
+    </section>
 
 <section class="card calendar-card" aria-labelledby="calendar-heading">
   <div class="section-title-row">
@@ -126,12 +140,13 @@
   <div id="calendarDetails" aria-live="polite"></div>
 </section>
     <footer>
-      <p>StudyFlow · Esta versión no usa Python, servidores ni base de datos. Los datos existen únicamente mientras mantengas abierta la sesión.</p>
+      <p>StudyFlow · Tus materias y notas se guardan en tu cuenta cuando inicias sesión. Las solicitudes y el intercambio de promedios usarán permisos separados.</p>
     </footer>
   </main>
   <script src="app.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" defer></script>
   <script src="supabase-config.js" defer></script>
+  <script src="academic-data.js" defer></script>
   <script src="auth.js" defer></script>
 </body>
 </html>
