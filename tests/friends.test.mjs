@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import fs from "node:fs";
 import Friends from "../friends.js";
 
 const user = { id: "me", username: "student_me", display_name: "Yo" };
@@ -258,4 +259,22 @@ test("la búsqueda rechaza nombres de usuario inválidos sin consultar Supabase"
   assert.equal(mock.calls.some(call => call[0] === "searchProfilesByUsername"), false);
   assert.match(doc.getElementById("friendsSearchMessage").textContent, /3 a 24 caracteres/);
   controller.destroy();
+});
+
+
+test("la página registra la sección de amigos y carga el módulo antes de auth", () => {
+  const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const auth = fs.readFileSync(new URL("../auth.js", import.meta.url), "utf8");
+  const css = fs.readFileSync(new URL("../styles.css", import.meta.url), "utf8");
+  for (const id of [
+    "friendsSection", "friendsPrivacyToggle", "friendsPrivacyMessage", "friendsSearchForm",
+    "friendsSearchUsername", "friendsSearchMessage", "friendsSearchResults", "friendsRequestsMessage",
+    "friendsRequestsList", "friendsListMessage", "friendsList", "sharedAveragesHeading",
+    "sharedAveragesMessage", "sharedAveragesTable"
+  ]) assert.ok(html.includes('id="' + id + '"'), "Falta el elemento #" + id);
+  assert.match(html, /src="friends\.js" defer><\/script>\s*<script src="auth\.js" defer>/);
+  assert.match(auth, /StudyFlowFriends\.mount/);
+  assert.match(auth, /destroyFriendsUI\(\)/);
+  assert.match(css, /\.friends-grid/);
+  assert.match(css, /@media \(max-width: 820px\)[\s\S]*?\.friends-grid/);
 });
