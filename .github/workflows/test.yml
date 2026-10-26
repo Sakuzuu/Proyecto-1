@@ -1,0 +1,26 @@
+name: StudyFlow tests
+on:
+  push:
+    branches:
+      - main
+      - feature/cloud-academic-data
+  pull_request:
+  workflow_dispatch:
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+          node --check auth.js
+          node --check academic-data.js
+          node --check supabase-config.js
+      - name: Run automated tests
+        run: node --test tests/*.mjs

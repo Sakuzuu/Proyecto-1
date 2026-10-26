@@ -68,7 +68,11 @@
       signOut: () => client.auth.signOut(),
       getProfile(userId) {
         if (!userId) return Promise.resolve({ data: null, error: new Error("No hay una sesión de usuario activa.") });
-        return client.from("profiles").select("id, username, display_name, created_at").eq("id", userId).maybeSingle();
+        return client.from("profiles").select("id, username, display_name, share_academic_averages, created_at").eq("id", userId).maybeSingle();
+      },
+      updateSharingPreference(userId, enabled) {
+        if (!userId) return Promise.resolve({ data: null, error: new Error("No hay una sesión activa.") });
+        return client.from("profiles").update({ share_academic_averages: Boolean(enabled) }).eq("id", userId).select("id, share_academic_averages").single();
       },
       onAuthStateChange: callback => client.auth.onAuthStateChange(callback)
     };
@@ -124,7 +128,7 @@
       else forms = `<div class="auth-tabs" role="tablist" aria-label="Acceso a StudyFlow"><button type="button" class="auth-tab ${currentView === "login" ? "is-active" : ""}" role="tab" aria-selected="${currentView === "login"}" data-action="login">Iniciar sesión</button><button type="button" class="auth-tab ${currentView === "register" ? "is-active" : ""}" role="tab" aria-selected="${currentView === "register"}" data-action="register">Crear cuenta</button></div>
       <form id="auth-login-form" class="auth-form" ${currentView !== "login" ? "hidden" : ""} novalidate><label for="auth-login-email">Correo electrónico</label><input id="auth-login-email" type="email" autocomplete="email" maxlength="254" required><label for="auth-login-password">Contraseña</label><input id="auth-login-password" type="password" autocomplete="current-password" required><button class="button" type="submit">Iniciar sesión</button><button class="auth-link" type="button" data-action="forgot">Olvidé mi contraseña</button></form>
       <form id="auth-register-form" class="auth-form" ${currentView !== "register" ? "hidden" : ""} novalidate><label for="auth-display-name">Nombre visible</label><input id="auth-display-name" type="text" minlength="2" maxlength="60" autocomplete="name" required><label for="auth-username">Nombre de usuario</label><input id="auth-username" type="text" minlength="3" maxlength="24" pattern="[a-zA-Z0-9_]+" autocomplete="username" required><small>3–24 caracteres: letras, números y guion bajo.</small><label for="auth-register-email">Correo electrónico</label><input id="auth-register-email" type="email" maxlength="254" autocomplete="email" required><label for="auth-register-password">Contraseña</label><input id="auth-register-password" type="password" minlength="8" autocomplete="new-password" required><label for="auth-register-confirm">Confirmar contraseña</label><input id="auth-register-confirm" type="password" minlength="8" autocomplete="new-password" required><button class="button" type="submit">Crear cuenta</button><p class="auth-small">Te enviaremos un correo para verificar la dirección si la confirmación está activada.</p></form>`;
-      view.innerHTML = `<article class="auth-card"><p class="eyebrow">STUDYFLOW · CUENTAS</p><h1>${recoveryMode ? "Restablecer contraseña" : currentView === "register" ? "Crea tu cuenta" : currentView === "forgot" ? "Recupera tu cuenta" : "Bienvenido a StudyFlow"}</h1><p class="auth-muted">${recoveryMode ? "Elige una nueva contraseña segura." : "Inicia sesión o crea una cuenta para guardar tu perfil."}</p>${alert}${forms}<p class="auth-small">Nunca compartas tu contraseña. Tus materias y notas todavía no se sincronizan en esta etapa.</p></article>`;
+      view.innerHTML = `<article class="auth-card"><p class="eyebrow">STUDYFLOW · CUENTAS</p><h1>${recoveryMode ? "Restablecer contraseña" : currentView === "register" ? "Crea tu cuenta" : currentView === "forgot" ? "Recupera tu cuenta" : "Bienvenido a StudyFlow"}</h1><p class="auth-muted">${recoveryMode ? "Elige una nueva contraseña segura." : "Inicia sesión o crea una cuenta para guardar tu perfil."}</p>${alert}${forms}<p class="auth-small">Nunca compartas tu contraseña. Tus materias y notas se sincronizarán al entrar a StudyFlow.</p></article>`;
       view.querySelectorAll("[data-action]").forEach(button => button.addEventListener("click", () => {
         const action = button.dataset.action;
         if (action === "login" || action === "register") renderAuth("", "", action);
@@ -136,30 +140,73 @@
       }));
     }
 
-    function revealApp(profile) {
+    async function revealApp(profile) {
       view.hidden = true; app.hidden = false; app.removeAttribute("aria-hidden"); app.dataset.accountMode = "account";
+      const clearButton = doc.getElementById("clearSession");
+      if (clearButton) clearButton.hidden = true;
       let tools = doc.getElementById("studyflow-account-tools");
       if (!tools) { tools = doc.createElement("div"); tools.id = "studyflow-account-tools"; tools.className = "auth-account-tools"; const actions = app.querySelector(".hero-actions"); if (actions) actions.appendChild(tools); }
       tools.innerHTML = `<span class="auth-user-label">@${escapeHtml(profile.username)}</span><button id="auth-logout-from-app" class="button button-secondary" type="button">Cerrar sesión</button>`;
       doc.getElementById("auth-logout-from-app").addEventListener("click", handleSignOut);
       let notice = doc.getElementById("auth-stage-notice");
       if (!notice) { notice = doc.createElement("p"); notice.id = "auth-stage-notice"; notice.className = "auth-stage-notice"; const hero = app.querySelector(".hero"); if (hero && hero.parentNode) hero.parentNode.insertBefore(notice, hero.nextSibling); }
-      notice.textContent = "Cuenta conectada. En esta primera etapa, materias y notas siguen siendo locales y no se sincronizan; esa será la siguiente fase.";
+      notice.textContent = "Conectando tus materias y notas con tu cuenta…";
+      if (!win.StudyFlowCloud || !win.StudyFlowApp || typeof win.StudyFlowApp.connectCloud !== "function") {
+        notice.textContent = "No se pudo inicializar la sincronización académica. Recarga la página.";
+        notice.classList.add("is-error");
+        return;
+      }
+      try {
+        const cloudService = win.StudyFlowCloud.createService(client);
+        const result = await win.StudyFlowApp.connectCloud(cloudService, activeUserId || profile.id);
+        if (result.error) {
+          notice.textContent = "Tu cuenta está conectada, pero no se pudieron cargar los datos. Revisa la conexión y vuelve a entrar.";
+          notice.classList.add("is-error");
+        } else {
+          notice.textContent = "Cuenta conectada. Tus materias y notas se guardan en la nube y estarán disponibles desde otros dispositivos.";
+          notice.classList.remove("is-error");
+        }
+      } catch (_) {
+        notice.textContent = "No se pudo inicializar la sincronización académica. Recarga la página.";
+        notice.classList.add("is-error");
+      }
     }
     function showProfile(profile, user) {
       view.hidden = false;
-      view.innerHTML = `<article class="auth-card auth-profile-card"><p class="eyebrow">STUDYFLOW · PERFIL</p><h1>¡Hola, ${escapeHtml(profile.display_name || "estudiante")}!</h1><p class="auth-muted">Tu cuenta está activa.</p><div class="auth-profile-summary"><span class="auth-avatar" aria-hidden="true">${escapeHtml((profile.display_name || profile.username || "S").slice(0,1).toUpperCase())}</span><div><strong>${escapeHtml(profile.display_name)}</strong><p>@${escapeHtml(profile.username)}</p><small>${escapeHtml(user.email || "")}</small></div></div><button id="auth-enter-app" class="button" type="button">Entrar a StudyFlow</button><button id="auth-sign-out" class="button button-secondary" type="button">Cerrar sesión</button></article>`;
+      view.innerHTML = `<article class="auth-card auth-profile-card"><p class="eyebrow">STUDYFLOW · PERFIL</p><h1>¡Hola, ${escapeHtml(profile.display_name || "estudiante")}!</h1><p class="auth-muted">Tu cuenta está activa.</p><div class="auth-profile-summary"><span class="auth-avatar" aria-hidden="true">${escapeHtml((profile.display_name || profile.username || "S").slice(0,1).toUpperCase())}</span><div><strong>${escapeHtml(profile.display_name)}</strong><p>@${escapeHtml(profile.username)}</p><small>${escapeHtml(user.email || "")}</small></div></div><label class="auth-share-toggle" for="auth-share-averages"><input id="auth-share-averages" type="checkbox" ${profile.share_academic_averages ? "checked" : ""}><span><strong>Permitir compartir mis promedios</strong><small>Cuando agregues amigos, podrán consultar promedios por materia y año, nunca las notas individuales. Está desactivado por defecto.</small></span></label><p id="auth-profile-message" class="auth-message" hidden role="status"></p><button id="auth-enter-app" class="button" type="button">Entrar a StudyFlow</button><button id="auth-sign-out" class="button button-secondary" type="button">Cerrar sesión</button></article>`;
       doc.getElementById("auth-enter-app").addEventListener("click", () => revealApp(profile));
       doc.getElementById("auth-sign-out").addEventListener("click", handleSignOut);
+      doc.getElementById("auth-share-averages").addEventListener("change", async event => {
+        const toggle = event.currentTarget;
+        const message = doc.getElementById("auth-profile-message");
+        toggle.disabled = true;
+        const result = await service.updateSharingPreference(user.id, toggle.checked).catch(error => ({ error }));
+        toggle.disabled = false;
+        if (result.error || !result.data) {
+          toggle.checked = !toggle.checked;
+          message.hidden = false;
+          message.className = "auth-message is-error";
+          message.textContent = friendlyError(result.error || new Error("No se guardó la preferencia."));
+          return;
+        }
+        profile.share_academic_averages = Boolean(result.data.share_academic_averages);
+        message.hidden = false;
+        message.className = "auth-message is-success";
+        message.textContent = toggle.checked ? "Preferencia guardada. Solo se compartirán promedios cuando aceptes una amistad." : "Preferencia guardada. Tus promedios no se compartirán.";
+      });
     }
     async function handleSession(event, session) {
       const token = ++changeToken, user = session && session.user;
       if (event === "PASSWORD_RECOVERY") { recoveryMode = true; renderAuth("Introduce tu nueva contraseña.", "success"); return; }
       if (recoveryMode && user) { renderAuth("Enlace verificado. Introduce tu nueva contraseña.", "success"); return; }
       if (!user) {
-        if (activeUserId || app.dataset.accountMode === "account") { const clear = doc.getElementById("clearSession"); if (clear) clear.click(); }
+        if (win.StudyFlowApp && typeof win.StudyFlowApp.disconnectCloud === "function") win.StudyFlowApp.disconnectCloud();
+        const clear = doc.getElementById("clearSession");
+        if (clear) { clear.hidden = false; clear.click(); }
         activeUserId = null; app.hidden = true; app.setAttribute("aria-hidden", "true");
         const tools = doc.getElementById("studyflow-account-tools"); if (tools) tools.remove();
+        const notice = doc.getElementById("auth-stage-notice"); if (notice) notice.remove();
+        app.dataset.accountMode = "local";
         renderAuth("", "", "login"); return;
       }
       activeUserId = user.id;
@@ -176,7 +223,8 @@
         if (msg) msg.textContent = friendlyError(result.error);
         return;
       }
-      const clear = doc.getElementById("clearSession"); if (clear) clear.click();
+      if (win.StudyFlowApp && typeof win.StudyFlowApp.disconnectCloud === "function") win.StudyFlowApp.disconnectCloud();
+      const clear = doc.getElementById("clearSession"); if (clear) { clear.hidden = false; clear.click(); }
       activeUserId = null; app.hidden = true; app.setAttribute("aria-hidden", "true"); renderAuth("Has cerrado sesión.", "success", "login");
     }
     function setBusy(form, busy) {
