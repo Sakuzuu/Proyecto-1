@@ -30,7 +30,7 @@
       const from = String(uci).slice(0, 2), to = String(uci).slice(2, 4), promotion = String(uci).slice(4, 5);
       const move = chess.move({ from, to, ...(promotion ? { promotion } : {}) });
       if (!move) return [];
-      san.push({ san: move.san, color: move.color, number: move.color === "w" ? chess.move_number() - 1 : chess.move_number() });
+      san.push({ san: move.san, color: move.color });
     }
     return san;
   }
