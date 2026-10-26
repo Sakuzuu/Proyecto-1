@@ -22,7 +22,7 @@
 :root[data-theme="dark"] { color-scheme: dark; --bg:#0f172a; --surface:#172033; --surface-soft:#1e293b; --border:#334155; --text:#f8fafc; --muted:#94a3b8; --primary:#60a5fa; --primary-dark:#93c5fd; --danger-bg:#3f1d2a; --danger-border:#7f1d1d; --danger-text:#fda4af; --success-bg:#123329; --success-border:#166534; --success-text:#86efac; --warning-bg:#3a2c10; --warning-border:#854d0e; --warning-text:#fcd34d; --shadow:0 12px 30px rgba(0,0,0,.25);
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+body { margin: 0; background: var(--chess-page-bg, var(--bg)); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled, input:disabled, select:disabled { cursor: not-allowed; opacity: 0.6; }
@@ -151,4 +151,85 @@ footer { margin-top: 16px; color: var(--muted); font-size: 12px; line-height: 1.
   .friend-item-action { width: 100%; justify-content: flex-start; }
   .friend-item-action .button { flex: 1; }
   .friends-search-form .input-action .button { width: auto; }
+}
+
+
+/* Chess matches and the point-funded page-background shop */
+.chess-section { margin-top: 16px; }
+.chess-score-pill { display: flex; align-items: center; gap: 10px; border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px; background: var(--surface-soft); white-space: nowrap; }
+.chess-score-pill > span { font-size: 28px; color: var(--primary); }
+.chess-score-pill div { display: grid; gap: 1px; }
+.chess-score-pill strong { font-size: 23px; line-height: 1.1; }
+.chess-score-pill small { color: var(--muted); font-size: 11px; }
+.chess-message { margin: 0 0 16px; padding: 10px 13px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-soft); color: var(--muted); font-size: 13px; line-height: 1.55; }
+.chess-message.is-error { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger-text); }
+.chess-message.is-success { background: var(--success-bg); border-color: var(--success-border); color: var(--success-text); }
+.chess-layout { display: grid; grid-template-columns: minmax(300px, .92fr) minmax(300px, 1.08fr); align-items: start; gap: 16px; }
+.chess-side-column { display: grid; gap: 14px; min-width: 0; }
+.chess-panel { min-width: 0; padding: 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.chess-panel h3 { margin: 0; font-size: 17px; }
+.chess-panel h4 { margin: 16px 0 8px; font-size: 13px; }
+.chess-panel .muted { font-size: 12px; line-height: 1.55; }
+.chess-panel > .muted { margin: 8px 0 12px; }
+.chess-panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.chess-panel-heading .button { flex: 0 0 auto; min-height: 36px; padding: 0 10px; font-size: 12px; }
+.chess-panel-heading p { margin: 5px 0 0; }
+.chess-invite-form { display: grid; gap: 9px; }
+.chess-invite-form .button { width: 100%; }
+.chess-games-list, .chess-shop-list { display: grid; gap: 8px; }
+.chess-game-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-soft); }
+.chess-game-item.is-active { border-color: var(--primary); }
+.chess-game-info { min-width: 0; display: grid; gap: 4px; }
+.chess-game-info strong { font-size: 13px; overflow-wrap: anywhere; }
+.chess-game-info span { font-size: 12px; font-weight: 750; color: var(--primary); }
+.chess-game-info small { color: var(--muted); font-size: 11px; }
+.chess-game-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.chess-game-actions .button { min-height: 34px; padding: 0 9px; font-size: 11px; }
+.chess-board-container { width: 100%; max-width: 520px; margin: 0 auto; }
+.chess-board { display: grid; grid-template-columns: repeat(8, minmax(0,1fr)); width: 100%; overflow: hidden; border-radius: 8px; border: 1px solid var(--border); }
+.chess-square { min-width: 0; aspect-ratio: 1; display: grid; position: relative; place-items: center; padding: 0; border: 0; border-radius: 0; }
+.chess-square:disabled { opacity: 1; cursor: default; }
+.chess-square-light { background: #f0d9b5; color: #201910; }
+.chess-square-dark { background: #b58863; color: #201910; }
+.chess-square.is-selected { box-shadow: inset 0 0 0 4px #facc15; }
+.chess-square.is-target::after { content: ""; width: 22%; height: 22%; position: absolute; border-radius: 50%; background: #166534; opacity: .55; }
+.chess-square.is-target:has(.chess-piece:not(.chess-piece-empty))::after { width: 88%; height: 88%; background: transparent; border: 4px solid #166534; }
+.chess-piece { position: relative; z-index: 1; font-size: clamp(23px, 4vw, 46px); line-height: 1; font-family: "Segoe UI Symbol", "DejaVu Sans", "Arial Unicode MS", serif; user-select: none; }
+.chess-piece-white { color: #fffdf4; text-shadow: -1px -1px 0 #282828, 1px -1px 0 #282828, -1px 1px 0 #282828, 1px 1px 0 #282828; }
+.chess-piece-black { color: #171717; text-shadow: -1px -1px 0 #eee8dc, 1px -1px 0 #eee8dc, -1px 1px 0 #eee8dc, 1px 1px 0 #eee8dc; }
+.chess-piece-empty { display: none; }
+.chess-file-label, .chess-rank-label { position: absolute; z-index: 2; font-size: clamp(8px, 1vw, 11px); line-height: 1; font-weight: 850; color: #242424; }
+.chess-file-label { right: 3px; bottom: 3px; }
+.chess-rank-label { top: 3px; left: 3px; }
+.chess-promotion { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 12px; padding: 12px; border-radius: 11px; background: var(--surface-soft); border: 1px solid var(--border); font-size: 12px; }
+.chess-promotion .button { min-height: 36px; padding: 0 10px; font-size: 12px; }
+.chess-promotion-choice span { font-size: 18px; }
+.chess-play-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+.chess-play-actions .button { min-height: 38px; }
+.chess-history-wrap { max-height: 190px; overflow: auto; }
+.chess-move-list { list-style: none; display: grid; gap: 5px; padding: 0; margin: 8px 0 0; }
+.chess-move-list li { display: grid; grid-template-columns: 28px 1fr 1fr; gap: 8px; padding: 6px 8px; border-radius: 7px; background: var(--surface-soft); font-size: 12px; }
+.chess-move-list li span { color: var(--muted); }
+.chess-rules-note { margin: 14px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+.chess-shop-item { display: grid; grid-template-columns: 54px minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 9px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); }
+.chess-shop-item.is-current { border-color: var(--primary); }
+.chess-swatch-pair { display: grid; grid-template-columns: 1fr 1fr; height: 34px; overflow: hidden; border: 1px solid var(--border); border-radius: 7px; }
+.chess-swatch-pair span { display: block; }
+.chess-shop-copy { min-width: 0; display: grid; gap: 3px; }
+.chess-shop-copy strong { font-size: 12px; }
+.chess-shop-copy small { font-size: 11px; color: var(--muted); }
+.chess-shop-action .button { min-height: 34px; padding: 0 9px; font-size: 11px; }
+.chess-owned-label { font-size: 11px; font-weight: 800; color: var(--success-text); white-space: nowrap; }
+.button-selected { box-shadow: inset 0 0 0 2px var(--primary-dark); }
+@media (max-width: 820px) { .chess-layout { grid-template-columns: 1fr; } .chess-play-panel { grid-row: 1; } }
+@media (max-width: 520px) {
+  .chess-score-pill { padding: 8px 10px; }
+  .chess-panel { padding: 13px; }
+  .chess-game-item { align-items: flex-start; flex-direction: column; }
+  .chess-game-actions { width: 100%; justify-content: flex-start; }
+  .chess-game-actions .button { flex: 1; }
+  .chess-piece { font-size: clamp(22px, 8vw, 34px); }
+  .chess-shop-item { grid-template-columns: 42px minmax(0,1fr); }
+  .chess-shop-action { grid-column: 1/-1; }
+  .chess-shop-action .button { width: 100%; }
 }
