@@ -29,3 +29,12 @@ En Supabase → Authentication → URL Configuration, configura la Site URL y a�
 ## Pruebas
 
 GitHub Actions ejecuta la comprobación de sintaxis JavaScript y `node --test tests/*.mjs`. El registro real y la confirmación de correo requieren una prueba manual con una dirección que controles.
+
+
+## Amigos e intercambio de promedios
+
+La sección Amigos e intercambio de promedios está disponible después de iniciar sesión y entrar a StudyFlow. Permite buscar un nombre de usuario exacto, enviar solicitudes, aceptar/rechazar solicitudes recibidas, ver amistades y eliminar una amistad. La lista se vuelve a cargar tras cada operación para reflejar el estado almacenado en Supabase.
+
+El consentimiento "Permitir compartir mis promedios" se puede modificar desde el perfil o desde la sección de amigos. Empieza desactivado. Solo una amistad aceptada puede consultar datos y solo mientras el propietario tenga activada la preferencia. El resultado contiene promedios agrupados por materia y período académico y un promedio general por período; no permite consultar calificaciones individuales ni correos electrónicos. El permiso se aplica en la base de datos mediante las funciones RPC, no solo en la interfaz.
+
+Las pruebas automatizadas verifican el escape de contenido, validación de usuario, representación de solicitudes, flujo de aceptar/rechazar, privacidad, consulta de promedios y eliminación de amistades. Una validación completa entre dos cuentas reales aún requiere iniciar sesión con dos usuarios de prueba y comprobar la confirmación por correo en el entorno desplegado.
