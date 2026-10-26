@@ -22,6 +22,9 @@ jobs:
           node --check auth.js
           node --check academic-data.js
           node --check friends.js
+          node --check chess-ui.js
           node --check supabase-config.js
+      - name: Install chess rules engine for tests
+        run: npm install --no-save --no-package-lock chess.js@1.4.0
       - name: Run automated tests
         run: node --test tests/*.mjs
