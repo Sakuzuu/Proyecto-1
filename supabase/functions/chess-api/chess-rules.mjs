@@ -7,10 +7,10 @@ export function parseUci(uci) {
   return { from: match[1], to: match[2], ...(match[3] ? { promotion: match[3] } : {}) };
 }
 
-export function replayMoves(ChessCtor, moves) {
+export function replayMoves(ChessCtor, moves, startFen = START_FEN) {
   if (typeof ChessCtor !== "function") throw new TypeError("No se recibió un motor de ajedrez válido.");
   if (!Array.isArray(moves) || moves.length > 600) throw new Error("Historial de partida inválido.");
-  const chess = new ChessCtor();
+  const chess = new ChessCtor(startFen);
   for (const uci of moves) {
     const move = chess.move(parseUci(uci));
     if (!move) throw new Error("El historial contiene una jugada ilegal.");
@@ -28,8 +28,8 @@ export function inspectPosition(chess) {
   return { status: "finished", winnerColor: null, finishReason: "draw" };
 }
 
-export function applyLegalMove(ChessCtor, previousMoves, input) {
-  const chess = replayMoves(ChessCtor, previousMoves);
+export function applyLegalMove(ChessCtor, previousMoves, input, startFen = START_FEN) {
+  const chess = replayMoves(ChessCtor, previousMoves, startFen);
   if (inspectPosition(chess).status !== "active") throw new Error("La partida ya terminó.");
   if (!input || !/^[a-h][1-8]$/.test(String(input.from || "")) || !/^[a-h][1-8]$/.test(String(input.to || ""))) {
     throw new Error("Selecciona casillas válidas.");
