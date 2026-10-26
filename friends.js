@@ -247,8 +247,8 @@
         button.disabled = false;
         return;
       }
-      message(els.friendsRequestsMessage, status === "accepted" ? "Solicitud aceptada. Ya son amigos." : "Solicitud rechazada.", "success");
       await refreshLists();
+      message(els.friendsRequestsMessage, status === "accepted" ? "Solicitud aceptada. Ya son amigos." : "Solicitud rechazada.", "success");
     }
 
     async function loadAverages(friend) {
