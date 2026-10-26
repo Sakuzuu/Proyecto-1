@@ -21,6 +21,7 @@ jobs:
           node --check app.js
           node --check auth.js
           node --check academic-data.js
+          node --check friends.js
           node --check supabase-config.js
       - name: Run automated tests
         run: node --test tests/*.mjs

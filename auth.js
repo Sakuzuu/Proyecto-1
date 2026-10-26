@@ -118,6 +118,13 @@
     let recoveryMode = Boolean(win.location && isPasswordRecoveryUrl(win.location.href)), activeUserId = null, changeToken = 0;
     let currentView = "login";
 
+    function destroyFriendsUI() {
+      if (win.StudyFlowFriendsController && typeof win.StudyFlowFriendsController.destroy === "function") {
+        win.StudyFlowFriendsController.destroy();
+      }
+      win.StudyFlowFriendsController = null;
+    }
+
     function renderAuth(message, kind, viewName) {
       if (viewName) currentView = viewName;
       view.hidden = false;
@@ -170,6 +177,26 @@
         notice.textContent = "No se pudo inicializar la sincronización académica. Recarga la página.";
         notice.classList.add("is-error");
       }
+      if (win.StudyFlowFriends) {
+        try {
+          destroyFriendsUI();
+          win.StudyFlowFriendsController = win.StudyFlowFriends.mount({
+            document: doc,
+            service: win.StudyFlowCloud.createService(client),
+            userId: activeUserId || profile.id,
+            profile: profile
+          });
+        } catch (_) {
+          const friendsMessage = doc.getElementById("friendsRequestsMessage");
+          const friendsSection = doc.getElementById("friendsSection");
+          if (friendsSection) friendsSection.hidden = false;
+          if (friendsMessage) {
+            friendsMessage.hidden = false;
+            friendsMessage.className = "friends-message is-error";
+            friendsMessage.textContent = "No se pudo inicializar la sección de amigos. Recarga la página.";
+          }
+        }
+      }
     }
     function showProfile(profile, user) {
       view.hidden = false;
@@ -200,6 +227,7 @@
       if (event === "PASSWORD_RECOVERY") { recoveryMode = true; renderAuth("Introduce tu nueva contraseña.", "success"); return; }
       if (recoveryMode && user) { renderAuth("Enlace verificado. Introduce tu nueva contraseña.", "success"); return; }
       if (!user) {
+        destroyFriendsUI();
         if (win.StudyFlowApp && typeof win.StudyFlowApp.disconnectCloud === "function") win.StudyFlowApp.disconnectCloud();
         const clear = doc.getElementById("clearSession");
         if (clear) { clear.hidden = false; clear.click(); }
@@ -223,6 +251,7 @@
         if (msg) msg.textContent = friendlyError(result.error);
         return;
       }
+      destroyFriendsUI();
       if (win.StudyFlowApp && typeof win.StudyFlowApp.disconnectCloud === "function") win.StudyFlowApp.disconnectCloud();
       const clear = doc.getElementById("clearSession"); if (clear) { clear.hidden = false; clear.click(); }
       activeUserId = null; app.hidden = true; app.setAttribute("aria-hidden", "true"); renderAuth("Has cerrado sesión.", "success", "login");

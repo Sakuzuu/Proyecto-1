@@ -104,3 +104,51 @@ footer { margin-top: 16px; color: var(--muted); font-size: 12px; line-height: 1.
 .auth-share-toggle input{width:18px;height:18px;min-height:auto;margin-top:2px;accent-color:var(--primary,#1d4ed8)}
 .auth-share-toggle span{display:grid;gap:4px}
 .auth-share-toggle small{color:var(--muted,#64748b);line-height:1.5}
+
+
+/* Friends and consent-based academic average sharing */
+.friends-section { margin-top: 16px; }
+.friends-privacy-box { margin: 0 0 18px; padding: 13px; border: 1px solid var(--border); border-radius: 13px; background: var(--surface-soft); }
+.friends-privacy-toggle { display: flex; align-items: flex-start; gap: 11px; cursor: pointer; }
+.friends-privacy-toggle input { flex: 0 0 auto; width: 18px; height: 18px; min-height: 18px; margin: 2px 0 0; accent-color: var(--primary); }
+.friends-privacy-toggle span { display: grid; gap: 4px; }
+.friends-privacy-toggle small { color: var(--muted); line-height: 1.55; font-weight: 450; }
+.friends-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.friends-panel { min-width: 0; padding: 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.friends-panel h3 { margin: 0 0 7px; font-size: 17px; }
+.friends-panel h4 { margin: 16px 0 8px; font-size: 13px; }
+.friends-panel > .muted { margin: 0 0 13px; font-size: 13px; line-height: 1.55; }
+.friends-search-form { display: grid; gap: 7px; }
+.friends-search-form .muted { display: block; font-size: 12px; line-height: 1.5; }
+.friends-search-form .input-action { align-items: stretch; }
+.friends-search-form .button { white-space: nowrap; }
+.friends-message { margin: 10px 0; padding: 9px 11px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); color: var(--muted); font-size: 12px; line-height: 1.55; }
+.friends-message.is-error { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger-text); }
+.friends-message.is-success { border-color: var(--success-border); background: var(--success-bg); color: var(--success-text); }
+.friends-message.is-info { border-color: var(--border); }
+.friends-message.is-loading { border-color: var(--border); }
+.friends-list { display: grid; gap: 8px; margin-top: 12px; }
+.friend-item { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-soft); }
+.friend-identity { min-width: 0; display: grid; gap: 3px; overflow-wrap: anywhere; }
+.friend-identity strong { font-size: 13px; }
+.friend-identity small { color: var(--muted); font-size: 12px; }
+.friend-item-action { display: flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
+.friend-item-action .button { min-height: 36px; padding: 0 10px; font-size: 12px; }
+.friend-actions { flex-shrink: 0; }
+.friend-state { color: var(--muted); font-size: 11px; line-height: 1.45; }
+.friend-state-shared { color: var(--success-text); }
+.text-button { padding: 6px; border: 0; background: transparent; font: inherit; font-size: 12px; font-weight: 750; cursor: pointer; }
+.danger-text { color: var(--danger-text); }
+.friend-subsection + .friend-subsection { margin-top: 16px; }
+.friends-average-table { min-width: 340px; }
+.friends-average-table td, .friends-average-table th { padding: 10px 8px; font-size: 12px; }
+.friends-averages-panel .table-wrap { margin-top: 8px; }
+@media (max-width: 820px) {
+  .friends-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .friend-item { align-items: flex-start; flex-direction: column; }
+  .friend-item-action { width: 100%; justify-content: flex-start; }
+  .friend-item-action .button { flex: 1; }
+  .friends-search-form .input-action .button { width: auto; }
+}

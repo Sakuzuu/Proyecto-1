@@ -126,7 +126,59 @@
       <div id="annualAveragesTable" class="table-wrap" aria-live="polite"></div>
     </section>
 
-<section class="card calendar-card" aria-labelledby="calendar-heading">
+
+    <section id="friendsSection" class="card friends-section" aria-labelledby="friends-title" hidden>
+      <div class="section-title-row">
+        <div>
+          <p class="eyebrow">COMUNIDAD</p>
+          <h2 id="friends-title">Amigos e intercambio de promedios</h2>
+          <p class="muted">Conecta con otros estudiantes y compara tu progreso sin compartir notas individuales.</p>
+        </div>
+        <span class="pill">Privacidad por cuenta</span>
+      </div>
+      <div class="friends-privacy-box">
+        <label class="friends-privacy-toggle" for="friendsPrivacyToggle">
+          <input id="friendsPrivacyToggle" type="checkbox">
+          <span><strong>Permitir compartir mis promedios</strong><small>Solo tus amigos aceptados podrán ver promedios agregados por materia y año académico. Nunca compartirás tus notas individuales.</small></span>
+        </label>
+        <p id="friendsPrivacyMessage" class="friends-message" role="status" hidden></p>
+      </div>
+      <div class="friends-grid">
+        <article class="friends-panel" aria-labelledby="friends-search-title">
+          <h3 id="friends-search-title">Buscar estudiantes</h3>
+          <p class="muted">Busca el nombre de usuario exacto (por ejemplo, <code>ana_2026</code>).</p>
+          <form id="friendsSearchForm" class="friends-search-form" novalidate>
+            <label for="friendsSearchUsername">Nombre de usuario</label>
+            <div class="input-action">
+              <input id="friendsSearchUsername" name="username" type="text" minlength="3" maxlength="24" autocomplete="off" placeholder="usuario_estudiante" aria-describedby="friends-search-help" required>
+              <button class="button" type="submit">Buscar</button>
+            </div>
+            <small id="friends-search-help" class="muted">De 3 a 24 caracteres: letras minúsculas, números y guion bajo.</small>
+          </form>
+          <p id="friendsSearchMessage" class="friends-message" role="status" hidden></p>
+          <div id="friendsSearchResults" class="friends-list" aria-live="polite"></div>
+        </article>
+        <article class="friends-panel" aria-labelledby="friends-requests-title">
+          <h3 id="friends-requests-title">Solicitudes</h3>
+          <p class="muted">Acepta solicitudes recibidas o consulta las que siguen pendientes.</p>
+          <p id="friendsRequestsMessage" class="friends-message" role="status" hidden></p>
+          <div id="friendsRequestsList" class="friends-list" aria-live="polite"></div>
+        </article>
+        <article class="friends-panel" aria-labelledby="friends-list-title">
+          <h3 id="friends-list-title">Mis amigos</h3>
+          <p class="muted">Elige un amigo para consultar únicamente los promedios que tenga permitidos compartir.</p>
+          <p id="friendsListMessage" class="friends-message" role="status" hidden></p>
+          <div id="friendsList" class="friends-list" aria-live="polite"></div>
+        </article>
+        <article class="friends-panel friends-averages-panel" aria-labelledby="sharedAveragesHeading">
+          <h3 id="sharedAveragesHeading">Promedios compartidos</h3>
+          <p id="sharedAveragesMessage" class="friends-message" role="status">Selecciona un amigo para consultar sus promedios.</p>
+          <div id="sharedAveragesTable" class="table-wrap" aria-live="polite"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="card calendar-card" aria-labelledby="calendar-heading">
   <div class="section-title-row">
     <div><p class="eyebrow">CALENDARIO</p><h2 id="calendar-heading">Calendario de notas</h2><p class="muted">Cada nota queda asociada a una fecha durante esta sesión.</p></div>
     <input id="calendarMonth" type="month" aria-label="Mes del calendario">
@@ -147,6 +199,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" defer></script>
   <script src="supabase-config.js" defer></script>
   <script src="academic-data.js" defer></script>
+  <script src="friends.js" defer></script>
   <script src="auth.js" defer></script>
 </body>
 </html>
