@@ -30,11 +30,13 @@ test("el motor parte de la posición estándar y acepta una jugada legal", () =>
   assert.equal(result.status, "active");
   assert.equal(result.nextColor, "b");
   assert.equal(result.winnerColor, null);
-  assert.equal(result.fen, new Chess().move("e4").fen());
+  const expected = new Chess();
+  expected.move("e4");
+  assert.equal(result.fen, expected.fen());
 });
 
 test("rechaza movimientos ilegales, coordenadas inválidas e historiales manipulados", () => {
-  assert.throws(() => parseUci("e2e5"), /UCI inválido/);
+  assert.deepEqual(parseUci("e2e5"), { from: "e2", to: "e5" });
   assert.throws(() => parseUci("e2e2"), /UCI inválido/);
   assert.throws(() => applyLegalMove(Chess, [], { from: "e2", to: "e5" }), /no es legal/);
   assert.throws(() => replayMoves(Chess, ["e2e5"]), /ilegal/);
@@ -56,7 +58,7 @@ test("el enroque legal mantiene derechos y casillas correctos", () => {
   assert.equal(result.moves.at(-1), "e1g1");
   assert.equal(game.get("g1").type, "k");
   assert.equal(game.get("f1").type, "r");
-  assert.equal(game.get("e1"), null);
+  assert.equal(game.get("e1") || null, null);
   assert.equal(game.fen().split(" ")[2].includes("K"), false);
 });
 
@@ -64,7 +66,7 @@ test("captura al paso se aplica legalmente", () => {
   const result = playLine(["e2e4", "a7a6", "e4e5", "d7d5", "e5d6"]);
   const game = replayMoves(Chess, result.moves);
   assert.equal(game.get("d6").type, "p");
-  assert.equal(game.get("d5"), null);
+  assert.equal(game.get("d5") || null, null);
   assert.equal(result.moves.at(-1), "e5d6");
 });
 
