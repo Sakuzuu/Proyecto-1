@@ -1,0 +1,4 @@
+project_id = "liuogfkzppxevvaclvpl"
+
+[functions.chess-api]
+verify_jwt = true
