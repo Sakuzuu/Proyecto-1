@@ -128,23 +128,24 @@ Deno.serve(async (req: Request) => {
     if (action === "respond_invite") {
       const gameId = body.game_id, accept = body.accept === true;
       if (!isUuid(gameId)) throw httpError(400, "La invitación no es válida.");
+      const pendingGame = await admin.from("chess_games")
+        .select("id, challenger_id, opponent_id, revision")
+        .eq("id", gameId).eq("opponent_id", user.id).eq("status", "pending").maybeSingle();
+      if (pendingGame.error) dbError(pendingGame.error);
+      if (!pendingGame.data) throw httpError(409, "La invitación ya no está pendiente o no te pertenece.");
       const update = await admin.from("chess_games").update({
         status: accept ? "active" : "declined",
         moves: [],
         fen: START_FEN,
-        current_turn: null,
+        current_turn: accept ? pendingGame.data.challenger_id : null,
         started_at: accept ? new Date().toISOString() : null,
         updated_at: new Date().toISOString(),
-        revision: 0
+        revision: accept ? 1 : pendingGame.data.revision + 1
       }).eq("id", gameId).eq("opponent_id", user.id).eq("status", "pending")
+        .eq("revision", pendingGame.data.revision)
         .select("id, status, challenger_id, opponent_id, fen, current_turn, revision").maybeSingle();
       if (update.error) dbError(update.error);
-      if (!update.data) throw httpError(409, "La invitación ya no está pendiente o no te pertenece.");
-      if (accept) {
-        const start = await admin.from("chess_games").update({ current_turn: update.data.challenger_id })
-          .eq("id", gameId).eq("revision", 0).eq("status", "active").select("id").single();
-        if (start.error) dbError(start.error);
-      }
+      if (!update.data) throw httpError(409, "La invitación cambió mientras respondías. Actualiza la lista.");
       return respond({ data: update.data, message: accept ? "Partida aceptada. Juegan blancas primero." : "Invitación rechazada." });
     }
 
