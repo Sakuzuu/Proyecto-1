@@ -19,7 +19,7 @@ test("materias y notas se aislan por propietario con RLS", () => {
 test("las notas individuales no se conceden a amigos; RPC devuelve promedios agregados", () => {
   const sql = read("supabase/schema.sql");
   assert.match(sql, /function public\.get_shared_academic_averages\(p_friend_id uuid\)/i);
-  assert.match(sql, /from public\.friendships as f/i);
+  assert.match(sql, /from public\.friendships\s+(?:as\s+)?f/i);
   assert.match(sql, /p\.share_academic_averages is true/i);
   assert.match(sql, /group by s\.id, s\.name, g\.academic_year/i);
   assert.match(sql, /group by g\.academic_year/i);

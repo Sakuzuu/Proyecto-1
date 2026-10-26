@@ -24,7 +24,7 @@ RLS protege todas las tablas. Materias y notas solo pueden leerse o modificarse 
 
 En una base vacía, aplica `supabase/migrations/` por orden de versión o utiliza `supabase/schema.sql`. No ejecutes el esquema consolidado sobre una base que contenga datos no respaldados.
 
-En Supabase → Authentication → URL Configuration, autoriza `https://sakuzuu.github.io/Proyecto-1/` como Site URL y Redirect URL. Deja Email habilitado.
+En Supabase → Authentication → URL Configuration, configura la Site URL y añade `https://sakuzuu.github.io/Proyecto-1/` en **Redirect URLs** (lista de redirecciones permitidas). Deja Email habilitado.
 
 ## Pruebas
 
