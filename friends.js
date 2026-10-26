@@ -17,11 +17,14 @@
   function friendlyError(error) {
     const message = String(error && error.message || "").toLowerCase();
     const code = String(error && error.code || "");
-    if (code === "23505" || message.includes("friend_requests_pending_pair_unique")) {
+    if (message.includes("friend_requests_pending_pair_unique")) {
       return "Ya existe una solicitud pendiente entre estas cuentas. Revisa tus solicitudes o espera la respuesta.";
     }
     if (message.includes("friendships") && (code === "23505" || message.includes("duplicate"))) {
       return "Ya existe una amistad con esta cuenta. Actualiza la lista de amigos.";
+    }
+    if (code === "23505") {
+      return "Esta acción generaría un registro duplicado. Actualiza tus solicitudes y vuelve a intentarlo.";
     }
     if (/failed to fetch|network|timeout/.test(message)) return "No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.";
     if (message.includes("permission denied") || message.includes("not authorized")) return "La operación no está permitida para esta cuenta.";
