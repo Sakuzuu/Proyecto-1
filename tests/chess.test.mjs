@@ -139,7 +139,7 @@ test("la Edge Function valida sesión, jugadas, amistades y operaciones protegid
   assert.match(sql, /revoke all on function public\.commit_chess_move[\s\S]*?from public, anon, authenticated/i);
   assert.match(sql, /grant execute on function public\.commit_chess_move[\s\S]*?to service_role/i);
   assert.match(sql, /grant execute on function public\.purchase_chess_background[\s\S]*?to service_role/i);
-  assert.match(sql, /points = public\.chess_wallets\.points \+ 10/i);
+  assert.match(sql, /points\s*=\s*public\.chess_wallets\.points\s*\+\s*10/i);
 });
 
 test("la página carga la biblioteca, la sección y el controlador antes de autenticar", () => {
