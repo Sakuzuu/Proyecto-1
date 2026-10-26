@@ -12,7 +12,9 @@ export function replayMoves(ChessCtor, moves, startFen = START_FEN) {
   if (!Array.isArray(moves) || moves.length > 600) throw new Error("Historial de partida inválido.");
   const chess = new ChessCtor(startFen);
   for (const uci of moves) {
-    const move = chess.move(parseUci(uci));
+    let move;
+    try { move = chess.move(parseUci(uci)); }
+    catch (_) { throw new Error("El historial contiene una jugada ilegal."); }
     if (!move) throw new Error("El historial contiene una jugada ilegal.");
   }
   return chess;
