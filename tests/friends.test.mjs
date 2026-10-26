@@ -278,3 +278,17 @@ test("la página registra la sección de amigos y carga el módulo antes de auth
   assert.match(css, /\.friends-grid/);
   assert.match(css, /@media \(max-width: 820px\)[\s\S]*?\.friends-grid/);
 });
+
+
+test("la interfaz permite rechazar solicitudes sin crear una amistad", async () => {
+  const { doc, mock, controller } = createUI();
+  await controller.ready;
+  await doc.getElementById("friendsRequestsList").dispatch("click", {
+    target: clickTarget({ requestAction: "rejected", requestId: "request-in" })
+  });
+  assert.ok(mock.calls.some(call => call[0] === "respondToFriendRequest" && call[2] === "request-in" && call[3] === "rejected"));
+  assert.ok(!controller.state.friends.some(item => item.id === "student-2"));
+  assert.doesNotMatch(doc.getElementById("friendsRequestsList").innerHTML, /data-request-id="request-in"/);
+  assert.match(doc.getElementById("friendsRequestsMessage").textContent, /rechazada/);
+  controller.destroy();
+});
