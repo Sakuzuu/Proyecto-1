@@ -38,3 +38,15 @@ La sección Amigos e intercambio de promedios está disponible después de inici
 El consentimiento "Permitir compartir mis promedios" se puede modificar desde el perfil o desde la sección de amigos. Empieza desactivado. Solo una amistad aceptada puede consultar datos y solo mientras el propietario tenga activada la preferencia. El resultado contiene promedios agrupados por materia y período académico y un promedio general por período; no permite consultar calificaciones individuales ni correos electrónicos. El permiso se aplica en la base de datos mediante las funciones RPC, no solo en la interfaz.
 
 Las pruebas automatizadas verifican el escape de contenido, validación de usuario, representación de solicitudes, flujo de aceptar/rechazar, privacidad, consulta de promedios y eliminación de amistades. Una validación completa entre dos cuentas reales aún requiere iniciar sesión con dos usuarios de prueba y comprobar la confirmación por correo en el entorno desplegado.
+
+
+## Ajedrez y tienda de fondos
+
+La sección Ajedrez permite invitar a amigos aceptados, aceptar/rechazar desafíos, jugar con el tablero legal, sincronizar movimientos entre sesiones y rendirse. Las jugadas se revalidan en la Edge Function privada usando el historial UCI y el motor chess.js; los cambios de estado usan una revisión incremental para evitar que dos movimientos simultáneos sobrescriban el resultado. La app escucha cambios de partidas en Supabase Realtime y también ofrece un botón para actualizar.
+
+Cada victoria por jaque mate o rendición concede 10 Papucoins. Los empates no conceden Papucoins. La recompensa y la compra de fondos se aplican mediante funciones SQL transaccionales que solo puede ejecutar el rol de servidor; el navegador no tiene permisos de escritura sobre saldo, compras o partidas. El historial tiene una restricción única por partida para impedir cobrar dos veces la misma victoria.
+
+Fondos disponibles: Clásico (gratis), Océano (20 Papucoins), Bosque (20), Atardecer (20), Lavanda (20), Rosa (20) y Medianoche (30). Los fondos comprados quedan asociados a la cuenta y se pueden volver a activar sin coste. El saldo se guarda en Supabase, no en el almacenamiento local del navegador.
+
+El esquema y las migraciones studyflow_chess_points_and_background_shop y studyflow_chess_invite_lifecycle contienen RLS, restricciones y los flujos de invitación; una invitación pendiente se cierra al cancelar o eliminar la amistad, y solo el destinatario puede aceptarla. El backend está en supabase/functions/chess-api/. La función se despliega con autenticación JWT activa; nunca expongas la clave secreta/service-role en archivos del navegador. La validación automatizada usa chess.js para probar reglas de movimiento y flujos de invitación/recompensa. La prueba final en producción debe completarse con dos cuentas distintas en GitHub Pages.
+

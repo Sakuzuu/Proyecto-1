@@ -125,6 +125,11 @@
       win.StudyFlowFriendsController = null;
     }
 
+    function destroyChessUI() {
+      if (win.StudyFlowChessController && typeof win.StudyFlowChessController.destroy === "function") win.StudyFlowChessController.destroy();
+      win.StudyFlowChessController = null;
+    }
+
     function renderAuth(message, kind, viewName) {
       if (viewName) currentView = viewName;
       view.hidden = false;
@@ -197,6 +202,25 @@
           }
         }
       }
+      if (win.StudyFlowChess) {
+        try {
+          destroyChessUI();
+          win.StudyFlowChessController = win.StudyFlowChess.mount({
+            document: doc,
+            client: client,
+            userId: activeUserId || profile.id
+          });
+        } catch (_) {
+          const chessMessage = doc.getElementById("chessMessage");
+          const chessSection = doc.getElementById("chessSection");
+          if (chessSection) chessSection.hidden = false;
+          if (chessMessage) {
+            chessMessage.hidden = false;
+            chessMessage.className = "chess-message is-error";
+            chessMessage.textContent = "No se pudo inicializar la sección de ajedrez. Recarga la página.";
+          }
+        }
+      }
     }
     function showProfile(profile, user) {
       view.hidden = false;
@@ -227,6 +251,7 @@
       if (event === "PASSWORD_RECOVERY") { recoveryMode = true; renderAuth("Introduce tu nueva contraseña.", "success"); return; }
       if (recoveryMode && user) { renderAuth("Enlace verificado. Introduce tu nueva contraseña.", "success"); return; }
       if (!user) {
+        destroyChessUI();
         destroyFriendsUI();
         if (win.StudyFlowApp && typeof win.StudyFlowApp.disconnectCloud === "function") win.StudyFlowApp.disconnectCloud();
         const clear = doc.getElementById("clearSession");
@@ -251,6 +276,7 @@
         if (msg) msg.textContent = friendlyError(result.error);
         return;
       }
+      destroyChessUI();
       destroyFriendsUI();
       if (win.StudyFlowApp && typeof win.StudyFlowApp.disconnectCloud === "function") win.StudyFlowApp.disconnectCloud();
       const clear = doc.getElementById("clearSession"); if (clear) { clear.hidden = false; clear.click(); }

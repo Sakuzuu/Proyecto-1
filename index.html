@@ -178,6 +178,44 @@
       </div>
     </section>
 
+    
+    <section id="chessSection" class="card chess-section" aria-labelledby="chess-title" hidden>
+      <div class="section-title-row">
+        <div><p class="eyebrow">RETO ENTRE AMIGOS</p><h2 id="chess-title">Ajedrez, Papucoins y fondos</h2>
+        <p class="muted">Invita a un amigo a una partida. Quien gane recibe 10 Papucoins para desbloquear colores de fondo.</p></div>
+        <div class="chess-score-pill"><span aria-hidden="true">♟</span><div><strong id="chessPoints">0</strong><small>Papucoins disponibles</small></div></div>
+      </div>
+      <p id="chessMessage" class="chess-message" role="status" hidden></p>
+      <div class="chess-layout">
+        <div class="chess-side-column">
+          <article class="chess-panel" aria-labelledby="chess-invite-title">
+            <h3 id="chess-invite-title">Invitar a jugar</h3>
+            <p class="muted">Solo puedes invitar a personas que ya estén en tu lista de amigos.</p>
+            <form id="chessInviteForm" class="chess-invite-form"><label for="chessInviteFriend">Elige un amigo</label>
+              <select id="chessInviteFriend" name="friend" required><option value="">Cargando amigos…</option></select>
+              <button class="button" type="submit">Enviar invitación</button>
+            </form>
+          </article>
+          <article class="chess-panel" aria-labelledby="chess-games-title">
+            <div class="chess-panel-heading"><h3 id="chess-games-title">Mis partidas</h3><button id="chessRefresh" class="button button-secondary" type="button">Actualizar</button></div>
+            <p class="muted">Las invitaciones y jugadas se sincronizan entre cuentas.</p><div id="chessGames" class="chess-games-list" aria-live="polite"></div>
+          </article>
+          <article class="chess-panel" aria-labelledby="chess-shop-title">
+            <div class="chess-panel-heading"><div><h3 id="chess-shop-title">Tienda de fondos</h3><p class="muted">Los fondos se compran una vez y quedan guardados en tu cuenta.</p></div></div>
+            <div id="chessShop" class="chess-shop-list" aria-live="polite"></div>
+          </article>
+        </div>
+        <article class="chess-panel chess-play-panel" aria-labelledby="chess-board-title">
+          <div class="chess-panel-heading"><div><h3 id="chessBoardTitle">Selecciona una partida</h3><p id="chessBoardStatus" class="muted">Acepta una invitación o abre una partida activa.</p></div></div>
+          <div id="chessBoard" class="chess-board-container" aria-live="polite"><p class="empty">Tu tablero aparecerá aquí cuando abras una partida.</p></div>
+          <div id="chessPromotion" class="chess-promotion" hidden aria-label="Elige la pieza de promoción"></div>
+          <div class="chess-play-actions"><button id="chessResign" class="button button-secondary" type="button" disabled>Rendirse</button></div>
+          <div class="chess-history-wrap"><h4>Historial de jugadas</h4><div id="chessMoveHistory"><p class="muted">La partida todavía no tiene jugadas.</p></div></div>
+          <p class="chess-rules-note">Las jugadas se validan en el servidor. Cada victoria por jaque mate o rendición suma 10 Papucoins; los empates no dan Papucoins.</p>
+        </article>
+      </div>
+    </section>
+
     <section class="card calendar-card" aria-labelledby="calendar-heading">
   <div class="section-title-row">
     <div><p class="eyebrow">CALENDARIO</p><h2 id="calendar-heading">Calendario de notas</h2><p class="muted">Cada nota queda asociada a una fecha durante esta sesión.</p></div>
@@ -200,6 +238,8 @@
   <script src="supabase-config.js" defer></script>
   <script src="academic-data.js" defer></script>
   <script src="friends.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js" defer></script>
+  <script src="chess-ui.js" defer></script>
   <script src="auth.js" defer></script>
 </body>
 </html>
