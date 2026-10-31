@@ -169,7 +169,7 @@ test("la página carga la biblioteca, la sección y el controlador antes de aute
   for (const id of ["chessSection", "chessPoints", "chessMessage", "chessInviteForm", "chessInviteFriend", "chessGames", "chessBoard", "chessPromotion", "chessShop", "chessResign"]) {
     assert.ok(html.includes('id="' + id + '"'), "Falta #" + id);
   }
-  assert.match(html, /chess\.min\.js" defer><\/script>\s*<script src="chess-ui\.js" defer><\/script>\s*<script src="auth\.js" defer>/);
+  assert.match(html, /chess\.min\.js" defer><\/script>\s*<script src="chess-ui\.js" defer><\/script>\s*<script src="auth\.js\?v=[^"]+" defer>/);
   assert.match(html, /10 Papucoins/);
   assert.match(html, /href="#friendsSection">Agrega o acepta amigos<\/a>/);
   assert.match(html, /id="chessSection"[^>]*tabindex="-1"/);

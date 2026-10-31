@@ -272,7 +272,7 @@ test("la página registra la sección de amigos y carga el módulo antes de auth
     "friendsRequestsList", "friendsListMessage", "friendsList", "sharedAveragesHeading",
     "sharedAveragesMessage", "sharedAveragesTable"
   ]) assert.ok(html.includes('id="' + id + '"'), "Falta el elemento #" + id);
-  assert.match(html, /src="friends\.js" defer><\/script>[\s\S]*?src="chess-ui\.js" defer><\/script>\s*<script src="auth\.js" defer>/);
+  assert.match(html, /src="friends\.js" defer><\/script>[\s\S]*?src="chess-ui\.js" defer><\/script>\s*<script src="auth\.js\?v=[^"]+" defer>/);
   assert.match(auth, /StudyFlowFriends\.mount/);
   assert.match(auth, /destroyFriendsUI\(\)/);
   assert.match(css, /\.friends-grid/);
@@ -292,3 +292,4 @@ test("la interfaz permite rechazar solicitudes sin crear una amistad", async () 
   assert.match(doc.getElementById("friendsRequestsMessage").textContent, /rechazada/);
   controller.destroy();
 });
+
