@@ -18,7 +18,7 @@
     if (/session|auth|jwt|401/.test(message)) return "Tu sesión puede haber expirado. Cierra sesión y vuelve a entrar.";
     if (/not your turn|todavía no es tu turno/.test(message)) return "Todavía no es tu turno.";
     if (/stale|changed|cambió|409/.test(message)) return "La partida se actualizó en el otro dispositivo; el tablero se ha sincronizado.";
-    if (/insufficient_points|puntos/.test(message)) return error.message;
+    if (/insufficient_points|puntos|papucoins?/i.test(message)) return error.message;
     if (/no eres amigo|amigos/.test(message)) return error.message;
     if (/failed to fetch|network|conexión/.test(message)) return "No se pudo conectar con el servidor. Comprueba tu internet.";
     return error && error.message ? error.message : "No se pudo completar la operación.";
@@ -62,10 +62,11 @@
       const isActive = game.status === "active";
       const statusLabel = incoming ? "Invitación recibida" : outgoing ? "Esperando respuesta" :
         isActive ? (game.current_turn === userId ? "Tu turno" : "Turno del rival") :
-        game.status === "declined" ? "Invitación rechazada" :
-        game.winner_id ? (game.winner_id === userId ? "¡Ganaste! +10 puntos" : "Partida finalizada") : "Empate";
+        game.status === "declined" ? "Invitación cerrada" :
+        game.winner_id ? (game.winner_id === userId ? "¡Ganaste! +10 Papucoins" : "Partida finalizada") : "Empate";
       let action = "";
       if (incoming) action = '<button class="button" type="button" data-chess-action="accept" data-game-id="' + escapeHtml(game.id) + '">Aceptar</button><button class="button button-secondary" type="button" data-chess-action="decline" data-game-id="' + escapeHtml(game.id) + '">Rechazar</button>';
+      else if (outgoing) action = '<button class="button button-secondary" type="button" data-chess-action="cancel" data-game-id="' + escapeHtml(game.id) + '">Cancelar invitación</button>';
       else if (isActive) action = '<button class="button' + (selectedId === game.id ? " button-selected" : "") + '" type="button" data-chess-action="open" data-game-id="' + escapeHtml(game.id) + '">' + (selectedId === game.id ? "Partida abierta" : "Jugar") + "</button>";
       return '<article class="chess-game-item' + (selectedId === game.id ? " is-active" : "") + '"><div class="chess-game-info"><strong>' + escapeHtml(opponent) + "</strong><span>" +
         escapeHtml(statusLabel) + '</span><small>' + escapeHtml(game.player_color === "w" ? "Juegas con blancas" : "Juegas con negras") + "</small></div><div class=\"chess-game-actions\">" + action + "</div></article>";
@@ -81,9 +82,9 @@
       const disabled = !has && points < background.cost;
       const action = current ? '<span class="chess-owned-label">En uso</span>' :
         has ? '<button class="button button-secondary" type="button" data-background-action="activate" data-background-id="' + escapeHtml(background.id) + '">Usar</button>' :
-        '<button class="button" type="button" data-background-action="buy" data-background-id="' + escapeHtml(background.id) + '"' + (disabled ? " disabled" : "") + ">Comprar · " + escapeHtml(background.cost) + " pts</button>";
+        '<button class="button" type="button" data-background-action="buy" data-background-id="' + escapeHtml(background.id) + '"' + (disabled ? " disabled" : "") + ">Comprar · " + escapeHtml(background.cost) + " Papucoins</button>";
       return '<article class="chess-shop-item' + (current ? " is-current" : "") + '"><div class="chess-swatch-pair" aria-hidden="true"><span style="background:' + escapeHtml(background.light_color) + '"></span><span style="background:' + escapeHtml(background.dark_color) + '"></span></div><div class="chess-shop-copy"><strong>' +
-        escapeHtml(background.name) + '</strong><small>' + (has ? "Desbloqueado" : Number(background.cost) === 0 ? "Gratis" : "Cuesta " + escapeHtml(background.cost) + " puntos") + "</small></div><div class=\"chess-shop-action\">" + action + "</div></article>";
+        escapeHtml(background.name) + '</strong><small>' + (has ? "Desbloqueado" : Number(background.cost) === 0 ? "Gratis" : "Cuesta " + escapeHtml(background.cost) + " Papucoins") + "</small></div><div class=\"chess-shop-action\">" + action + "</div></article>";
     }).join("");
   }
 
@@ -163,7 +164,7 @@
       const yourTurn = active && game.current_turn === userId;
       const winnerName = game.winner && (game.winner.display_name || game.winner.username);
       let status = active ? (yourTurn ? "Tu turno" : "Turno del rival") : game.status === "pending" ? "Esperando respuesta a la invitación" :
-        game.status === "declined" ? "Invitación rechazada" : winnerName ? (game.winner_id === userId ? "¡Ganaste! Recibiste 10 puntos." : "Ganó " + winnerName + ".") : "Empate. Esta partida no entrega puntos.";
+        game.status === "declined" ? "Invitación cerrada" : winnerName ? (game.winner_id === userId ? "¡Ganaste! Recibiste 10 Papucoins." : "Ganó " + winnerName + ".") : "Empate. Esta partida no entrega Papucoins.";
       if (active && game.fen) {
         try {
           const chess = new ChessCtor(game.fen);
@@ -218,7 +219,7 @@
         }
         if (state.selectedGameId && !state.games.some(game => game.id === state.selectedGameId)) state.selectedGameId = null;
         renderAll();
-        if (!quiet) message("Partidas, puntos y fondos sincronizados.", "success");
+        if (!quiet) message("Partidas, Papucoins y fondos sincronizados.", "success");
       } catch (error) {
         message(errorMessage(error), "error");
       }
@@ -260,6 +261,8 @@
           if (action === "accept") state.selectedGameId = gameId;
           return result;
         }, action === "accept" ? "Invitación aceptada. ¡Que empiece la partida!" : "Invitación rechazada.");
+      } else if (action === "cancel") {
+        await runAction(() => invoke({ action: "cancel_invite", game_id: gameId }), "Invitación cancelada.");
       }
     }
     async function squareClick(event) {
@@ -310,7 +313,7 @@
       const game = getSelectedGame();
       if (!game || game.status !== "active") return;
       const confirmAction = typeof opts.confirm === "function" ? opts.confirm : (root.confirm || (() => true));
-      if (!confirmAction("¿Seguro que quieres rendirte? Tu amigo ganará y recibirá 10 puntos.")) return;
+      if (!confirmAction("¿Seguro que quieres rendirte? Tu amigo ganará y recibirá 10 Papucoins.")) return;
       await runAction(() => invoke({ action: "resign", game_id: game.id, expected_revision: game.revision }), "Partida finalizada.");
     }
     async function shopAction(event) {
@@ -356,3 +359,4 @@
 
   return { escapeHtml, uciToSan, renderBoard, renderGames, renderShop, mount, errorMessage };
 });
+

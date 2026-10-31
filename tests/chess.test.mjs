@@ -103,11 +103,15 @@ test("la UI representa las 64 casillas, la orientación y el historial SAN", () 
 test("renderiza invitaciones, desafíos y nombres no confiables de forma segura", () => {
   const markup = ChessUI.renderGames([
     { id: "g1", status: "pending", challenger_id: "other", opponent_id: "me", player_color: "b", opponent: { username: "rival", display_name: "<script>" } },
-    { id: "g2", status: "active", challenger_id: "me", opponent_id: "other", current_turn: "me", player_color: "w", opponent: { username: "rival", display_name: "Rival" } }
+    { id: "g2", status: "active", challenger_id: "me", opponent_id: "other", current_turn: "me", player_color: "w", opponent: { username: "rival", display_name: "Rival" } },
+    { id: "g3", status: "pending", challenger_id: "me", opponent_id: "other", player_color: "w", opponent: { username: "rival", display_name: "Rival" } },
+    { id: "g4", status: "finished", challenger_id: "me", opponent_id: "other", winner_id: "me", player_color: "w", opponent: { username: "rival", display_name: "Rival" } }
   ], "me", "g2");
   assert.match(markup, /data-chess-action="accept" data-game-id="g1"/);
   assert.match(markup, /data-chess-action="decline" data-game-id="g1"/);
   assert.match(markup, /data-chess-action="open" data-game-id="g2"/);
+  assert.match(markup, /data-chess-action="cancel" data-game-id="g3"/);
+  assert.match(markup, /¡Ganaste! \+10 Papucoins/);
   assert.doesNotMatch(markup, /<script>/);
   assert.match(markup, /&lt;script&gt;/);
 });
@@ -119,6 +123,7 @@ test("la tienda no deja comprar fondos sin puntos, y activa fondos ya comprados"
   ];
   const shop = ChessUI.renderShop(backgrounds, ["classic"], { points: 10, active_background: "classic" });
   assert.match(shop, /En uso/);
+  assert.match(shop, /Cuesta 20 Papucoins/);
   assert.match(shop, /data-background-action="buy" data-background-id="ocean" disabled/);
   const owned = ChessUI.renderShop(backgrounds, ["classic", "ocean"], { points: 0, active_background: "classic" });
   assert.match(owned, /data-background-action="activate" data-background-id="ocean"/);
@@ -127,10 +132,16 @@ test("la tienda no deja comprar fondos sin puntos, y activa fondos ya comprados"
 test("la Edge Function valida sesión, jugadas, amistades y operaciones protegidas", () => {
   const edge = read("supabase/functions/chess-api/index.ts");
   const sql = read("supabase/migrations/20261026214010_studyflow_chess_points_and_background_shop.sql");
+  const inviteLifecycle = read("supabase/migrations/20261031144138_studyflow_chess_invite_lifecycle.sql");
+  const schema = read("supabase/schema.sql");
   assert.match(edge, /auth\.getUser\(token\)/);
   assert.match(edge, /Chess/);
   assert.match(edge, /replayMoves\(Chess/);
   assert.match(edge, /only invite.*friends|Solo puedes invitar a personas que ya sean tus amigos/i);
+  assert.match(edge, /rpc\("create_chess_invite"/);
+  assert.match(edge, /rpc\("respond_chess_invite"/);
+  assert.match(edge, /action === "cancel_invite"[\s\S]*?challenger_id", user\.id[\s\S]*?revision/);
+  assert.match(edge, /typeof body\.accept !== "boolean"/);
   assert.match(edge, /commit_chess_move/);
   assert.match(edge, /purchase_chess_background/);
   assert.match(sql, /alter table public\.chess_games enable row level security/i);
@@ -140,18 +151,31 @@ test("la Edge Function valida sesión, jugadas, amistades y operaciones protegid
   assert.match(sql, /grant execute on function public\.commit_chess_move[\s\S]*?to service_role/i);
   assert.match(sql, /grant execute on function public\.purchase_chess_background[\s\S]*?to service_role/i);
   assert.match(sql, /points\s*=\s*public\.chess_wallets\.points\s*\+\s*10/i);
+  assert.match(inviteLifecycle, /create or replace function public\.create_chess_invite/i);
+  assert.match(inviteLifecycle, /create or replace function public\.respond_chess_invite/i);
+  assert.match(inviteLifecycle, /from public\.friendships[\s\S]*?for update/i);
+  assert.match(inviteLifecycle, /update public\.chess_games[\s\S]*?status = 'declined'[\s\S]*?g\.status = 'pending'/i);
+  assert.match(inviteLifecycle, /grant execute on function public\.create_chess_invite\(uuid, uuid\) to service_role/i);
+  assert.match(inviteLifecycle, /grant execute on function public\.respond_chess_invite\(uuid, uuid, boolean\) to service_role/i);
+  assert.match(schema, /create or replace function public\.create_chess_invite/i);
+  assert.match(schema, /create or replace function public\.respond_chess_invite/i);
 });
 
 test("la página carga la biblioteca, la sección y el controlador antes de autenticar", () => {
   const html = read("index.html");
   const auth = read("auth.js");
   const css = read("styles.css");
+  const chess = read("chess-ui.js");
   for (const id of ["chessSection", "chessPoints", "chessMessage", "chessInviteForm", "chessInviteFriend", "chessGames", "chessBoard", "chessPromotion", "chessShop", "chessResign"]) {
     assert.ok(html.includes('id="' + id + '"'), "Falta #" + id);
   }
   assert.match(html, /chess\.min\.js" defer><\/script>\s*<script src="chess-ui\.js" defer><\/script>\s*<script src="auth\.js" defer>/);
+  assert.match(html, /10 Papucoins/);
   assert.match(auth, /StudyFlowChess\.mount/);
   assert.match(auth, /destroyChessUI\(\)/);
+  assert.match(chess, /client\.channel\("studyflow-chess-/);
+  assert.match(chess, /postgres_changes"\s*,\s*\{ event: "\*", schema: "public", table: "chess_games" \}/);
   assert.match(css, /\.chess-board/);
   assert.match(css, /--chess-page-bg/);
 });
+

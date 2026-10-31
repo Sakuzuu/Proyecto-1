@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.58.0";
 import { Chess } from "npm:chess.js@1.4.0";
-import { START_FEN, replayMoves, applyLegalMove } from "./chess-rules.mjs";
+import { replayMoves, applyLegalMove } from "./chess-rules.mjs";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -112,41 +112,36 @@ Deno.serve(async (req: Request) => {
     if (action === "invite") {
       const friendId = body.friend_id;
       if (!isUuid(friendId) || friendId === user.id) throw httpError(400, "Selecciona un amigo válido.");
-      const pair = [user.id, friendId].sort();
-      const friendship = await admin.from("friendships").select("user_a_id")
-        .eq("user_a_id", pair[0]).eq("user_b_id", pair[1]).maybeSingle();
-      if (friendship.error) dbError(friendship.error);
-      if (!friendship.data) throw httpError(403, "Solo puedes invitar a personas que ya sean tus amigos.");
-      const result = await admin.from("chess_games").insert({
-        challenger_id: user.id, opponent_id: friendId, status: "pending",
-        moves: [], fen: START_FEN, current_turn: null
-      }).select("id, status, created_at").single();
+      const result = await admin.rpc("create_chess_invite", { p_challenger_id: user.id, p_opponent_id: friendId });
       if (result.error) dbError(result.error);
-      return respond({ data: result.data, message: "Invitación enviada." });
+      if (!result.data?.ok && result.data?.reason === "not_friends") throw httpError(403, "Solo puedes invitar a personas que ya sean tus amigos.");
+      if (!result.data?.ok) throw httpError(409, "No se pudo crear la invitación. Actualiza la lista e inténtalo de nuevo.");
+      return respond({ data: result.data.game, message: "Invitación enviada." });
     }
 
     if (action === "respond_invite") {
-      const gameId = body.game_id, accept = body.accept === true;
+      const gameId = body.game_id;
+      if (!isUuid(gameId) || typeof body.accept !== "boolean") throw httpError(400, "La invitación no es válida.");
+      const result = await admin.rpc("respond_chess_invite", { p_game_id: gameId, p_user_id: user.id, p_accept: body.accept });
+      if (result.error) dbError(result.error);
+      if (!result.data?.ok && result.data?.reason === "not_friends") throw httpError(403, "Ya no son amigos; la invitación se cerró.");
+      if (!result.data?.ok) throw httpError(409, "La invitación ya no está pendiente o no te pertenece.");
+      return respond({ data: result.data.game, message: body.accept ? "Partida aceptada. Juegan blancas primero." : "Invitación rechazada." });
+    }
+
+    if (action === "cancel_invite") {
+      const gameId = body.game_id;
       if (!isUuid(gameId)) throw httpError(400, "La invitación no es válida.");
-      const pendingGame = await admin.from("chess_games")
-        .select("id, challenger_id, opponent_id, revision")
-        .eq("id", gameId).eq("opponent_id", user.id).eq("status", "pending").maybeSingle();
-      if (pendingGame.error) dbError(pendingGame.error);
-      if (!pendingGame.data) throw httpError(409, "La invitación ya no está pendiente o no te pertenece.");
-      const update = await admin.from("chess_games").update({
-        status: accept ? "active" : "declined",
-        moves: [],
-        fen: START_FEN,
-        current_turn: accept ? pendingGame.data.challenger_id : null,
-        started_at: accept ? new Date().toISOString() : null,
-        updated_at: new Date().toISOString(),
-        revision: accept ? 1 : pendingGame.data.revision + 1
-      }).eq("id", gameId).eq("opponent_id", user.id).eq("status", "pending")
-        .eq("revision", pendingGame.data.revision)
-        .select("id, status, challenger_id, opponent_id, fen, current_turn, revision").maybeSingle();
-      if (update.error) dbError(update.error);
-      if (!update.data) throw httpError(409, "La invitación cambió mientras respondías. Actualiza la lista.");
-      return respond({ data: update.data, message: accept ? "Partida aceptada. Juegan blancas primero." : "Invitación rechazada." });
+      const pending = await admin.from("chess_games").select("revision")
+        .eq("id", gameId).eq("challenger_id", user.id).eq("status", "pending").maybeSingle();
+      if (pending.error) dbError(pending.error);
+      if (!pending.data) throw httpError(409, "La invitación ya no está pendiente o no te pertenece.");
+      const cancelled = await admin.from("chess_games").update({ status: "declined", updated_at: new Date().toISOString(), revision: pending.data.revision + 1 })
+        .eq("id", gameId).eq("challenger_id", user.id).eq("status", "pending").eq("revision", pending.data.revision)
+        .select("id, status, revision").maybeSingle();
+      if (cancelled.error) dbError(cancelled.error);
+      if (!cancelled.data) throw httpError(409, "La invitación cambió mientras la cancelabas. Actualiza la lista.");
+      return respond({ data: cancelled.data, message: "Invitación cancelada." });
     }
 
     if (action === "move") {
@@ -199,7 +194,7 @@ Deno.serve(async (req: Request) => {
       const result = await admin.rpc("finish_chess_game", { p_game_id: game.id, p_expected_revision: game.revision, p_winner_id: winnerId });
       if (result.error) dbError(result.error);
       if (!result.data?.ok) throw httpError(409, "La partida ya terminó en el otro dispositivo.");
-      return respond({ data: result.data, message: "Te has rendido. Tu rival recibe 10 puntos." });
+      return respond({ data: result.data, message: "Te has rendido. Tu rival recibe 10 Papucoins." });
     }
 
     if (action === "purchase_background") {
@@ -209,7 +204,7 @@ Deno.serve(async (req: Request) => {
       if (result.error) dbError(result.error);
       if (!result.data?.ok) {
         const reason = result.data?.reason;
-        if (reason === "insufficient_points") throw httpError(409, "Necesitas " + result.data.cost + " puntos; tienes " + result.data.points + ".", reason);
+        if (reason === "insufficient_points") throw httpError(409, "Necesitas " + result.data.cost + " Papucoins; tienes " + result.data.points + ".", reason);
         throw httpError(400, "No se pudo comprar ese fondo.", reason);
       }
       return respond({ data: result.data, message: result.data.already_owned ? "Ya tienes este fondo." : "Fondo comprado y activado." });
@@ -231,3 +226,4 @@ Deno.serve(async (req: Request) => {
     return respond({ error: String(error?.message || "Error interno."), code: error?.code || "chess_api_error" }, status);
   }
 });
+
