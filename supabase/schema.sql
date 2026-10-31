@@ -458,7 +458,7 @@ end;
 $$;
 
 -- Keep pending chess invitations aligned with the underlying friendship.
--- These definitions mirror 20261031144138_studyflow_chess_invite_lifecycle.sql.
+-- These definitions mirror 20261031151058_studyflow_chess_invite_lifecycle.sql.
 create or replace function public.remove_friend(p_friend_id uuid)
 returns boolean
 language plpgsql security definer set search_path = '' as $$

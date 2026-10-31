@@ -132,7 +132,7 @@ test("la tienda no deja comprar fondos sin puntos, y activa fondos ya comprados"
 test("la Edge Function valida sesión, jugadas, amistades y operaciones protegidas", () => {
   const edge = read("supabase/functions/chess-api/index.ts");
   const sql = read("supabase/migrations/20261026214010_studyflow_chess_points_and_background_shop.sql");
-  const inviteLifecycle = read("supabase/migrations/20261031144138_studyflow_chess_invite_lifecycle.sql");
+  const inviteLifecycle = read("supabase/migrations/20261031151058_studyflow_chess_invite_lifecycle.sql");
   const schema = read("supabase/schema.sql");
   assert.match(edge, /auth\.getUser\(token\)/);
   assert.match(edge, /Chess/);
