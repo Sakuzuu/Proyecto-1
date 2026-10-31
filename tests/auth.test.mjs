@@ -132,6 +132,13 @@ test("la vista de acceso carga antes que la app y el inicio evita mostrar ambas 
   assert.match(source, /user\.id === accountAppOpenFor && !app\.hidden/);
 });
 
+test("la conexión académica usa un solo aviso de estado", () => {
+  const source = fs.readFileSync(path.join(repoRoot, "auth.js"), "utf8");
+  assert.match(source, /function setCloudSyncStatus\(message, kind\)[\s\S]*?getElementById\("cloudSyncStatus"\)/);
+  assert.match(source, /StudyFlowApp\.connectCloud\(cloudService,[\s\S]*?setCloudSyncStatus\("No se pudo inicializar la sincronización académica/);
+  assert.doesNotMatch(source, /notice\.textContent = "Cuenta conectada\./);
+});
+
 
 test("detecta enlaces de recuperación en query y hash", () => {
   assert.equal(Auth.isPasswordRecoveryUrl("https://example.com/Proyecto-1/?type=recovery"), true);

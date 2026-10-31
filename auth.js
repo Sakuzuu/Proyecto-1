@@ -117,6 +117,25 @@
       app.removeAttribute("aria-hidden");
       app.dataset.accountMode = mode;
     }
+    function setCloudSyncStatus(message, kind) {
+      let status = doc.getElementById("cloudSyncStatus");
+      if (status) {
+        status.textContent = message;
+        status.className = "cloud-sync-status" + (kind ? " is-" + kind : "");
+        status.hidden = !message;
+        return;
+      }
+      status = doc.getElementById("auth-stage-notice");
+      if (!status) {
+        status = doc.createElement("p");
+        status.id = "auth-stage-notice";
+        status.className = "auth-stage-notice";
+        const hero = app.querySelector(".hero");
+        if (hero && hero.parentNode) hero.parentNode.insertBefore(status, hero.nextSibling);
+      }
+      status.textContent = message;
+      status.classList.toggle("is-error", kind === "error");
+    }
     showAuth();
     if (!doc.getElementById("studyflow-auth-css")) { const link = doc.createElement("link"); link.id = "studyflow-auth-css"; link.rel = "stylesheet"; link.href = "auth.css"; doc.head.appendChild(link); }
 
@@ -185,27 +204,16 @@
         if (typeof chessSection.focus === "function") chessSection.focus({ preventScroll: true });
       });
       doc.getElementById("auth-logout-from-app").addEventListener("click", handleSignOut);
-      let notice = doc.getElementById("auth-stage-notice");
-      if (!notice) { notice = doc.createElement("p"); notice.id = "auth-stage-notice"; notice.className = "auth-stage-notice"; const hero = app.querySelector(".hero"); if (hero && hero.parentNode) hero.parentNode.insertBefore(notice, hero.nextSibling); }
-      notice.textContent = "Conectando tus materias y notas con tu cuenta…";
       if (!win.StudyFlowCloud || !win.StudyFlowApp || typeof win.StudyFlowApp.connectCloud !== "function") {
-        notice.textContent = "No se pudo inicializar la sincronización académica. Recarga la página.";
-        notice.classList.add("is-error");
+        setCloudSyncStatus("No se pudo inicializar la sincronización académica. Recarga la página.", "error");
         return;
       }
       try {
         const cloudService = win.StudyFlowCloud.createService(client);
         const result = await win.StudyFlowApp.connectCloud(cloudService, activeUserId || profile.id);
-        if (result.error) {
-          notice.textContent = "Tu cuenta está conectada, pero no se pudieron cargar los datos. Revisa la conexión y vuelve a entrar.";
-          notice.classList.add("is-error");
-        } else {
-          notice.textContent = "Cuenta conectada. Tus materias y notas se guardan en la nube y estarán disponibles desde otros dispositivos.";
-          notice.classList.remove("is-error");
-        }
+        if (result.error && !doc.getElementById("cloudSyncStatus")?.textContent) setCloudSyncStatus("No se pudieron cargar tus materias y notas. Revisa tu conexión.", "error");
       } catch (_) {
-        notice.textContent = "No se pudo inicializar la sincronización académica. Recarga la página.";
-        notice.classList.add("is-error");
+        setCloudSyncStatus("No se pudo inicializar la sincronización académica. Recarga la página.", "error");
       }
       if (win.StudyFlowFriends) {
         try {
