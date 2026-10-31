@@ -171,6 +171,8 @@ test("la página carga la biblioteca, la sección y el controlador antes de aute
   }
   assert.match(html, /chess\.min\.js" defer><\/script>\s*<script src="chess-ui\.js" defer><\/script>\s*<script src="auth\.js" defer>/);
   assert.match(html, /10 Papucoins/);
+  assert.match(html, /href="#friendsSection">Agrega o acepta amigos<\/a>/);
+  assert.match(html, /id="chessSection"[^>]*tabindex="-1"/);
   assert.match(auth, /StudyFlowChess\.mount/);
   assert.match(auth, /destroyChessUI\(\)/);
   assert.match(chess, /client\.channel\("studyflow-chess-/);

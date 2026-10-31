@@ -111,6 +111,15 @@ test("la configuración no contiene credenciales y la guía explica el setup", (
   assert.match(guide, /Redirect URLs/);
 });
 
+test("la pantalla de acceso muestra el ajedrez y explica cómo abrirlo después de iniciar sesión", () => {
+  const source = fs.readFileSync(path.join(repoRoot, "auth.js"), "utf8");
+  assert.match(source, /Ajedrez en tiempo real/);
+  assert.match(source, /Invita a tus amigos, gana 10 Papucoins/);
+  assert.match(source, /Entrar a StudyFlow · Amigos y Ajedrez/);
+  assert.match(source, /auth-chess-link/);
+  assert.match(source, /chessSection\.scrollIntoView/);
+});
+
 
 test("detecta enlaces de recuperación en query y hash", () => {
   assert.equal(Auth.isPasswordRecoveryUrl("https://example.com/Proyecto-1/?type=recovery"), true);
@@ -126,3 +135,4 @@ test("guarda la preferencia de privacidad del promedio en el perfil", async () =
   assert.equal(result.data.share_academic_averages, true);
   assert.deepEqual(client.calls[0], ["updateProfile", "profiles", { share_academic_averages: true }, "id", "user-1", "id, share_academic_averages"]);
 });
+

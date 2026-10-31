@@ -179,7 +179,7 @@
     </section>
 
     
-    <section id="chessSection" class="card chess-section" aria-labelledby="chess-title" hidden>
+    <section id="chessSection" class="card chess-section" aria-labelledby="chess-title" tabindex="-1" hidden>
       <div class="section-title-row">
         <div><p class="eyebrow">RETO ENTRE AMIGOS</p><h2 id="chess-title">Ajedrez, Papucoins y fondos</h2>
         <p class="muted">Invita a un amigo a una partida. Quien gane recibe 10 Papucoins para desbloquear colores de fondo.</p></div>
@@ -190,7 +190,7 @@
         <div class="chess-side-column">
           <article class="chess-panel" aria-labelledby="chess-invite-title">
             <h3 id="chess-invite-title">Invitar a jugar</h3>
-            <p class="muted">Solo puedes invitar a personas que ya estén en tu lista de amigos.</p>
+            <p class="muted">Solo puedes invitar a amistades confirmadas. <a href="#friendsSection">Agrega o acepta amigos</a> primero si la lista está vacía.</p>
             <form id="chessInviteForm" class="chess-invite-form"><label for="chessInviteFriend">Elige un amigo</label>
               <select id="chessInviteFriend" name="friend" required><option value="">Cargando amigos…</option></select>
               <button class="button" type="submit">Enviar invitación</button>

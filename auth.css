@@ -4,6 +4,10 @@
 .auth-card h1 { font-size: clamp(26px, 4vw, 34px); margin: 4px 0 10px; line-height: 1.15; }
 .auth-muted { color: var(--muted, #64748b); line-height: 1.6; margin: 0 0 18px; }
 .auth-notice, .auth-message { border: 1px solid var(--border, #e2e8f0); background: var(--surface-soft, #f8fafc); border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.6; margin: 14px 0; }
+.auth-game-promo { display: grid; gap: 5px; margin: 18px 0; padding: 15px 16px; border: 1px solid var(--primary, #1d4ed8); border-radius: 14px; background: var(--surface-soft, #f8fafc); }
+.auth-game-promo .eyebrow { margin: 0; color: var(--primary, #1d4ed8); font-size: 11px; }
+.auth-game-promo strong { font-size: 17px; }
+.auth-game-promo p { margin: 0; color: var(--muted, #64748b); font-size: 13px; line-height: 1.6; }
 .auth-message.is-error { color: var(--danger-text, #be123c); background: var(--danger-bg, #fff1f2); border-color: var(--danger-border, #fecdd3); }
 .auth-message.is-success { color: var(--success-text, #047857); background: var(--success-bg, #ecfdf5); border-color: var(--success-border, #bbf7d0); }
 .auth-steps { padding-left: 21px; line-height: 1.8; color: var(--muted, #64748b); }
@@ -29,3 +33,4 @@
 .auth-user-label { display: inline-flex; align-items: center; min-height: 36px; border: 1px solid var(--border, #e2e8f0); border-radius: 999px; padding: 5px 11px; font-size: 12px; color: var(--muted, #64748b); }
 .auth-stage-notice { margin: 0 0 18px; padding: 11px 14px; border-radius: 11px; border: 1px solid var(--warning-border, #fde68a); background: var(--warning-bg, #fffbeb); color: var(--warning-text, #b45309); font-size: 13px; line-height: 1.6; }
 @media (max-width: 520px) { .auth-layout { width: min(100% - 20px, 620px); padding-top: 20px; } .auth-card { border-radius: 15px; } }
+
