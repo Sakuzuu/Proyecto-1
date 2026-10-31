@@ -103,13 +103,27 @@
     if (!app) return { ready: false, reason: "no-app" };
     let view = doc.getElementById("studyflow-auth-root");
     if (!view) { view = doc.createElement("section"); view.id = "studyflow-auth-root"; view.className = "auth-layout"; view.setAttribute("aria-live", "polite"); app.parentNode.insertBefore(view, app); }
-    app.hidden = true; app.setAttribute("aria-hidden", "true");
+    let accountAppOpenFor = null;
+    function showAuth() {
+      accountAppOpenFor = null;
+      view.hidden = false;
+      app.hidden = true;
+      app.setAttribute("aria-hidden", "true");
+      doc.querySelectorAll("[data-account-nav]").forEach(link => { link.hidden = true; });
+    }
+    function showApp(mode) {
+      view.hidden = true;
+      app.hidden = false;
+      app.removeAttribute("aria-hidden");
+      app.dataset.accountMode = mode;
+    }
+    showAuth();
     if (!doc.getElementById("studyflow-auth-css")) { const link = doc.createElement("link"); link.id = "studyflow-auth-css"; link.rel = "stylesheet"; link.href = "auth.css"; doc.head.appendChild(link); }
 
     if (!isConfigured(config) || !sdk || typeof sdk.createClient !== "function") {
       const hasConfig = Boolean(String(config.url || "").trim() || String(config.publishableKey || "").trim());
       view.innerHTML = `<article class="auth-card"><p class="eyebrow">STUDYFLOW · CUENTAS</p><h1>Conecta tu cuenta</h1><p class="auth-muted">Estamos preparando el acceso seguro para guardar tu perfil. Tus notas siguen disponibles en modo local.</p><div class="auth-notice" role="status">${escapeHtml(hasConfig ? "La configuración de Supabase no es válida o la biblioteca no se pudo cargar." : "Crea un proyecto Supabase, configura supabase-config.js y ejecuta el esquema SQL.")}</div><ol class="auth-steps"><li>Crea un proyecto en <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer">Supabase</a>.</li><li>Añade la URL y la clave publishable en <code>supabase-config.js</code>.</li><li>Ejecuta <code>supabase/schema.sql</code> desde SQL Editor.</li></ol><button class="button" id="auth-local-mode" type="button">Continuar con la versión local</button><p class="auth-small">El modo local no crea cuentas ni sincroniza datos entre dispositivos.</p></article>`;
-      doc.getElementById("auth-local-mode").addEventListener("click", () => { view.hidden = true; app.hidden = false; app.removeAttribute("aria-hidden"); app.dataset.accountMode = "local"; });
+      doc.getElementById("auth-local-mode").addEventListener("click", () => showApp("local"));
       return { ready: true, configured: false, authRoot: view, appShell: app };
     }
 
@@ -132,7 +146,7 @@
 
     function renderAuth(message, kind, viewName) {
       if (viewName) currentView = viewName;
-      view.hidden = false;
+      showAuth();
       const alert = message ? `<p class="auth-message ${kind === "error" ? "is-error" : "is-success"}" role="status">${escapeHtml(message)}</p>` : "";
       let forms;
       if (recoveryMode) forms = `<form id="auth-reset-form" class="auth-form"><label for="auth-new-password">Nueva contraseña</label><input id="auth-new-password" type="password" minlength="8" autocomplete="new-password" required><label for="auth-confirm-password">Confirmar contraseña</label><input id="auth-confirm-password" type="password" minlength="8" autocomplete="new-password" required><button class="button" type="submit">Guardar contraseña</button></form>`;
@@ -141,9 +155,9 @@
       <form id="auth-login-form" class="auth-form" ${currentView !== "login" ? "hidden" : ""} novalidate><label for="auth-login-email">Correo electrónico</label><input id="auth-login-email" type="email" autocomplete="email" maxlength="254" required><label for="auth-login-password">Contraseña</label><input id="auth-login-password" type="password" autocomplete="current-password" required><button class="button" type="submit">Iniciar sesión</button><button class="auth-link" type="button" data-action="forgot">Olvidé mi contraseña</button></form>
       <form id="auth-register-form" class="auth-form" ${currentView !== "register" ? "hidden" : ""} novalidate><label for="auth-display-name">Nombre visible</label><input id="auth-display-name" type="text" minlength="2" maxlength="60" autocomplete="name" required><label for="auth-username">Nombre de usuario</label><input id="auth-username" type="text" minlength="3" maxlength="24" pattern="[a-zA-Z0-9_]+" autocomplete="username" required><small>3–24 caracteres: letras, números y guion bajo.</small><label for="auth-register-email">Correo electrónico</label><input id="auth-register-email" type="email" maxlength="254" autocomplete="email" required><label for="auth-register-password">Contraseña</label><input id="auth-register-password" type="password" minlength="8" autocomplete="new-password" required><label for="auth-register-confirm">Confirmar contraseña</label><input id="auth-register-confirm" type="password" minlength="8" autocomplete="new-password" required><button class="button" type="submit">Crear cuenta</button><p class="auth-small">Te enviaremos un correo para verificar la dirección si la confirmación está activada.</p></form>`;
       const chessPromo = !recoveryMode && currentView !== "forgot"
-        ? '<aside class="auth-game-promo"><span class="eyebrow">RETO ENTRE AMIGOS</span><strong>Ajedrez en tiempo real</strong><p>Invita a tus amigos, gana 10 Papucoins por victoria y desbloquea fondos. Inicia sesión y entra a StudyFlow para abrir el tablero.</p></aside>'
+        ? '<aside class="auth-game-promo"><span class="eyebrow">RETO ENTRE AMIGOS</span><strong>Ajedrez en tiempo real</strong><p>Juega con amigos, gana 10 Papucoins y desbloquea fondos.</p></aside>'
         : "";
-      view.innerHTML = `<article class="auth-card"><p class="eyebrow">STUDYFLOW · CUENTAS</p><h1>${recoveryMode ? "Restablecer contraseña" : currentView === "register" ? "Crea tu cuenta" : currentView === "forgot" ? "Recupera tu cuenta" : "Bienvenido a StudyFlow"}</h1><p class="auth-muted">${recoveryMode ? "Elige una nueva contraseña segura." : "Inicia sesión o crea una cuenta para guardar tu perfil."}</p>${alert}${forms}${chessPromo}<p class="auth-small">Nunca compartas tu contraseña. Tus materias y notas se sincronizarán al entrar a StudyFlow.</p></article>`;
+      view.innerHTML = `<article class="auth-card"><p class="eyebrow">STUDYFLOW · CUENTAS</p><h1>${recoveryMode ? "Restablecer contraseña" : currentView === "register" ? "Crea tu cuenta" : currentView === "forgot" ? "Recupera tu cuenta" : "Bienvenido a StudyFlow"}</h1><p class="auth-muted">${recoveryMode ? "Elige una nueva contraseña segura." : "Inicia sesión o crea una cuenta."}</p>${alert}${forms}${chessPromo}<p class="auth-small">Nunca compartas tu contraseña. Tus notas se sincronizan al entrar.</p></article>`;
       view.querySelectorAll("[data-action]").forEach(button => button.addEventListener("click", () => {
         const action = button.dataset.action;
         if (action === "login" || action === "register") renderAuth("", "", action);
@@ -156,7 +170,8 @@
     }
 
     async function revealApp(profile) {
-      view.hidden = true; app.hidden = false; app.removeAttribute("aria-hidden"); app.dataset.accountMode = "account";
+      showApp("account");
+      accountAppOpenFor = activeUserId || profile.id;
       const clearButton = doc.getElementById("clearSession");
       if (clearButton) clearButton.hidden = true;
       let tools = doc.getElementById("studyflow-account-tools");
@@ -231,10 +246,12 @@
           }
         }
       }
+      doc.querySelectorAll("[data-account-nav]").forEach(link => { link.hidden = false; });
     }
     function showProfile(profile, user) {
-      view.hidden = false;
-      view.innerHTML = `<article class="auth-card auth-profile-card"><p class="eyebrow">STUDYFLOW · PERFIL</p><h1>¡Hola, ${escapeHtml(profile.display_name || "estudiante")}!</h1><p class="auth-muted">Tu cuenta está activa. Entra a StudyFlow para abrir Amigos y Ajedrez.</p><div class="auth-profile-summary"><span class="auth-avatar" aria-hidden="true">${escapeHtml((profile.display_name || profile.username || "S").slice(0,1).toUpperCase())}</span><div><strong>${escapeHtml(profile.display_name)}</strong><p>@${escapeHtml(profile.username)}</p><small>${escapeHtml(user.email || "")}</small></div></div><label class="auth-share-toggle" for="auth-share-averages"><input id="auth-share-averages" type="checkbox" ${profile.share_academic_averages ? "checked" : ""}><span><strong>Permitir compartir mis promedios</strong><small>Cuando agregues amigos, podrán consultar promedios por materia y año, nunca las notas individuales. Está desactivado por defecto.</small></span></label><p id="auth-profile-message" class="auth-message" hidden role="status"></p><button id="auth-enter-app" class="button" type="button">Entrar a StudyFlow · Amigos y Ajedrez</button><button id="auth-sign-out" class="button button-secondary" type="button">Cerrar sesión</button></article>`;
+      accountAppOpenFor = null;
+      showAuth();
+      view.innerHTML = `<article class="auth-card auth-profile-card"><p class="eyebrow">STUDYFLOW · PERFIL</p><h1>¡Hola, ${escapeHtml(profile.display_name || "estudiante")}!</h1><p class="auth-muted">Tus notas y amigos están listos.</p><div class="auth-profile-summary"><span class="auth-avatar" aria-hidden="true">${escapeHtml((profile.display_name || profile.username || "S").slice(0,1).toUpperCase())}</span><div><strong>${escapeHtml(profile.display_name)}</strong><p>@${escapeHtml(profile.username)}</p><small>${escapeHtml(user.email || "")}</small></div></div><label class="auth-share-toggle" for="auth-share-averages"><input id="auth-share-averages" type="checkbox" ${profile.share_academic_averages ? "checked" : ""}><span><strong>Compartir mis promedios</strong><small>Solo amigos aceptados los verán; tus notas individuales no se comparten. Desactivado por defecto.</small></span></label><p id="auth-profile-message" class="auth-message" hidden role="status"></p><button id="auth-enter-app" class="button" type="button">Abrir StudyFlow</button><button id="auth-sign-out" class="button button-secondary" type="button">Cerrar sesión</button></article>`;
       doc.getElementById("auth-enter-app").addEventListener("click", () => revealApp(profile));
       doc.getElementById("auth-sign-out").addEventListener("click", handleSignOut);
       doc.getElementById("auth-share-averages").addEventListener("change", async event => {
@@ -257,7 +274,9 @@
       });
     }
     async function handleSession(event, session) {
-      const token = ++changeToken, user = session && session.user;
+      const user = session && session.user;
+      if (event !== "PASSWORD_RECOVERY" && user && user.id === accountAppOpenFor && !app.hidden) return;
+      const token = ++changeToken;
       if (event === "PASSWORD_RECOVERY") { recoveryMode = true; renderAuth("Introduce tu nueva contraseña.", "success"); return; }
       if (recoveryMode && user) { renderAuth("Enlace verificado. Introduce tu nueva contraseña.", "success"); return; }
       if (!user) {
@@ -266,7 +285,7 @@
         if (win.StudyFlowApp && typeof win.StudyFlowApp.disconnectCloud === "function") win.StudyFlowApp.disconnectCloud();
         const clear = doc.getElementById("clearSession");
         if (clear) { clear.hidden = false; clear.click(); }
-        activeUserId = null; app.hidden = true; app.setAttribute("aria-hidden", "true");
+        activeUserId = null; accountAppOpenFor = null; showAuth();
         const tools = doc.getElementById("studyflow-account-tools"); if (tools) tools.remove();
         const notice = doc.getElementById("auth-stage-notice"); if (notice) notice.remove();
         app.dataset.accountMode = "local";
@@ -275,7 +294,7 @@
       activeUserId = user.id;
       const result = await service.getProfile(user.id);
       if (token !== changeToken) return;
-      if (result.error || !result.data) { app.hidden = true; app.setAttribute("aria-hidden", "true"); renderAuth(result.error ? friendlyError(result.error) : "Tu cuenta existe, pero el perfil no aparece. Ejecuta supabase/schema.sql.", "error", "login"); return; }
+      if (result.error || !result.data) { showAuth(); renderAuth(result.error ? friendlyError(result.error) : "Tu cuenta existe, pero el perfil no aparece. Ejecuta supabase/schema.sql.", "error", "login"); return; }
       recoveryMode = false; showProfile(result.data, user);
     }
     async function handleSignOut() {
@@ -290,7 +309,7 @@
       destroyFriendsUI();
       if (win.StudyFlowApp && typeof win.StudyFlowApp.disconnectCloud === "function") win.StudyFlowApp.disconnectCloud();
       const clear = doc.getElementById("clearSession"); if (clear) { clear.hidden = false; clear.click(); }
-      activeUserId = null; app.hidden = true; app.setAttribute("aria-hidden", "true"); renderAuth("Has cerrado sesión.", "success", "login");
+      activeUserId = null; accountAppOpenFor = null; showAuth(); renderAuth("Has cerrado sesión.", "success", "login");
     }
     function setBusy(form, busy) {
       const button = form.querySelector('button[type="submit"]'); if (!button) return;

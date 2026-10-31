@@ -6,20 +6,31 @@
   <meta name="description" content="StudyFlow: organiza materias y notas, calcula promedios y sincroniza tus datos académicos.">
   <title>StudyFlow · Rendimiento académico</title>
   <link rel="stylesheet" href="styles.css">
+  <link id="studyflow-auth-css" rel="stylesheet" href="auth.css">
 </head>
 <body>
-  <main class="shell">
+  <section id="studyflow-auth-root" class="auth-layout" aria-live="polite">
+    <article class="auth-card auth-loading-card" role="status">
+      <p class="eyebrow">STUDYFLOW</p><h1>Preparando tu espacio</h1><p class="auth-muted">Cargando el acceso…</p>
+    </article>
+    <noscript><p class="auth-message is-error">Activa JavaScript para usar StudyFlow.</p></noscript>
+  </section>
+  <main class="shell" hidden>
     <header class="hero">
       <div>
         <p class="eyebrow">STUDYFLOW</p>
         <h1>Mi rendimiento académico</h1>
-        <p class="subtitle">Registra tus materias y notas y calcula tu promedio al instante, directamente en el navegador.</p>
+        <p class="subtitle">Organiza tus materias, registra notas y revisa tu promedio.</p>
       </div>
       <div class="hero-actions"><button id="themeToggle" class="button button-secondary" type="button" aria-pressed="false">🌙 Modo oscuro</button><button id="clearSession" class="button button-secondary" type="button">Limpiar sesión</button></div>
     </header>
+    <nav class="section-nav" aria-label="Accesos rápidos">
+      <a href="#workspace">Materias y notas</a><a href="#averagesSection">Promedios</a>
+      <a href="#friendsSection" data-account-nav hidden>Amigos</a><a href="#chessSection" data-account-nav hidden>Ajedrez</a><a href="#calendarSection">Calendario</a>
+    </nav>
     <p id="cloudSyncStatus" class="cloud-sync-status" hidden role="status"></p>
 
-    <section class="grid summary-grid" aria-labelledby="summary-title">
+    <section id="summary" class="grid summary-grid" aria-labelledby="summary-title">
       <article class="card metric-card">
         <div class="card-heading"><span id="summary-title">Promedio general</span><span class="icon">Σ</span></div>
         <p id="overallAverage" class="metric">—</p>
@@ -28,7 +39,7 @@
       <article class="card metric-card">
         <div class="card-heading"><span>Meta elegida</span><span class="icon">◎</span></div>
         <p id="goalDisplay" class="metric">70/100</p>
-        <p class="muted">Puedes cambiarla cuando quieras.</p>
+      <p class="muted">Meta actual</p>
       </article>
       <article id="goalStatus" class="card status-card status-neutral" aria-live="polite">
         <div class="card-heading"><span>Estado</span><span class="icon">!</span></div>
@@ -40,13 +51,12 @@
     <section class="card" aria-labelledby="goal-section-title">
       <div class="section-title-row">
         <div>
-          <p class="eyebrow">PASO 1</p>
-          <h2 id="goal-section-title">Define tu meta</h2>
+          <h2 id="goal-section-title">Meta de promedio</h2>
         </div>
         <span class="pill">Durante esta sesión</span>
       </div>
       <form id="goalForm" class="inline-form">
-        <label for="goal">Promedio mínimo que quieres alcanzar</label>
+        <label for="goal">Promedio mínimo</label>
         <div class="input-action">
           <input id="goal" name="goal" type="number" min="0" max="100" step="0.1" value="70" required>
           <span>/ 100</span>
@@ -56,11 +66,10 @@
       <p id="goalError" class="form-error" role="alert" hidden></p>
     </section>
 
-    <section class="grid workspace-grid">
+    <section id="workspace" class="grid workspace-grid">
       <article class="card" aria-labelledby="subjects-title">
         <div class="section-title-row">
           <div>
-            <p class="eyebrow">PASO 2</p>
             <h2 id="subjects-title">Materias</h2>
           </div>
           <span id="subjectCount" class="pill">0</span>
@@ -79,7 +88,6 @@
       <article class="card" aria-labelledby="grades-title">
         <div class="section-title-row">
           <div>
-            <p class="eyebrow">PASO 3</p>
             <h2 id="grades-title">Notas</h2>
           </div>
           <span id="noteCount" class="pill">0</span>
@@ -105,25 +113,18 @@
       </article>
     </section>
 
-    <section class="card" aria-labelledby="averages-title">
+    <section id="averagesSection" class="card results-section" aria-labelledby="averages-title">
       <div class="section-title-row">
         <div>
-          <p class="eyebrow">RESULTADO</p>
           <h2 id="averages-title">Promedio por materia</h2>
         </div>
       </div>
       <div id="averagesTable" class="table-wrap" aria-live="polite"></div>
-    </section>
-
-    <section class="card" aria-labelledby="annual-averages-title">
-      <div class="section-title-row">
-        <div>
-          <p class="eyebrow">EVOLUCIÓN</p>
-          <h2 id="annual-averages-title">Promedio por año académico</h2>
-          <p class="muted">Se calcula con las notas registradas en cada período.</p>
-        </div>
-      </div>
-      <div id="annualAveragesTable" class="table-wrap" aria-live="polite"></div>
+      <details class="secondary-report">
+        <summary id="annual-averages-title">Promedio por año académico</summary>
+        <p class="muted">Según las notas de cada período.</p>
+        <div id="annualAveragesTable" class="table-wrap" aria-live="polite"></div>
+      </details>
     </section>
 
 
@@ -132,41 +133,37 @@
         <div>
           <p class="eyebrow">COMUNIDAD</p>
           <h2 id="friends-title">Amigos e intercambio de promedios</h2>
-          <p class="muted">Conecta con otros estudiantes y compara tu progreso sin compartir notas individuales.</p>
         </div>
-        <span class="pill">Privacidad por cuenta</span>
+        <span class="pill">Tú controlas lo que compartes</span>
       </div>
       <div class="friends-privacy-box">
         <label class="friends-privacy-toggle" for="friendsPrivacyToggle">
           <input id="friendsPrivacyToggle" type="checkbox">
-          <span><strong>Permitir compartir mis promedios</strong><small>Solo tus amigos aceptados podrán ver promedios agregados por materia y año académico. Nunca compartirás tus notas individuales.</small></span>
+          <span><strong>Compartir mis promedios</strong><small>Solo amigos aceptados verán tus promedios, nunca tus notas individuales.</small></span>
         </label>
         <p id="friendsPrivacyMessage" class="friends-message" role="status" hidden></p>
       </div>
       <div class="friends-grid">
         <article class="friends-panel" aria-labelledby="friends-search-title">
           <h3 id="friends-search-title">Buscar estudiantes</h3>
-          <p class="muted">Busca el nombre de usuario exacto (por ejemplo, <code>ana_2026</code>).</p>
           <form id="friendsSearchForm" class="friends-search-form" novalidate>
             <label for="friendsSearchUsername">Nombre de usuario</label>
             <div class="input-action">
               <input id="friendsSearchUsername" name="username" type="text" minlength="3" maxlength="24" autocomplete="off" placeholder="usuario_estudiante" aria-describedby="friends-search-help" required>
               <button class="button" type="submit">Buscar</button>
             </div>
-            <small id="friends-search-help" class="muted">De 3 a 24 caracteres: letras minúsculas, números y guion bajo.</small>
+            <small id="friends-search-help" class="muted">3–24 caracteres: letras minúsculas, números o _.</small>
           </form>
           <p id="friendsSearchMessage" class="friends-message" role="status" hidden></p>
           <div id="friendsSearchResults" class="friends-list" aria-live="polite"></div>
         </article>
         <article class="friends-panel" aria-labelledby="friends-requests-title">
           <h3 id="friends-requests-title">Solicitudes</h3>
-          <p class="muted">Acepta solicitudes recibidas o consulta las que siguen pendientes.</p>
           <p id="friendsRequestsMessage" class="friends-message" role="status" hidden></p>
           <div id="friendsRequestsList" class="friends-list" aria-live="polite"></div>
         </article>
         <article class="friends-panel" aria-labelledby="friends-list-title">
           <h3 id="friends-list-title">Mis amigos</h3>
-          <p class="muted">Elige un amigo para consultar únicamente los promedios que tenga permitidos compartir.</p>
           <p id="friendsListMessage" class="friends-message" role="status" hidden></p>
           <div id="friendsList" class="friends-list" aria-live="polite"></div>
         </article>
@@ -182,7 +179,7 @@
     <section id="chessSection" class="card chess-section" aria-labelledby="chess-title" tabindex="-1" hidden>
       <div class="section-title-row">
         <div><p class="eyebrow">RETO ENTRE AMIGOS</p><h2 id="chess-title">Ajedrez, Papucoins y fondos</h2>
-        <p class="muted">Invita a un amigo a una partida. Quien gane recibe 10 Papucoins para desbloquear colores de fondo.</p></div>
+        <p class="muted">Invita a un amigo: cada victoria suma 10 Papucoins para tus fondos.</p></div>
         <div class="chess-score-pill"><span aria-hidden="true">♟</span><div><strong id="chessPoints">0</strong><small>Papucoins disponibles</small></div></div>
       </div>
       <p id="chessMessage" class="chess-message" role="status" hidden></p>
@@ -190,7 +187,7 @@
         <div class="chess-side-column">
           <article class="chess-panel" aria-labelledby="chess-invite-title">
             <h3 id="chess-invite-title">Invitar a jugar</h3>
-            <p class="muted">Solo puedes invitar a amistades confirmadas. <a href="#friendsSection">Agrega o acepta amigos</a> primero si la lista está vacía.</p>
+            <p class="muted">Juega con amigos confirmados. <a href="#friendsSection">Agrega o acepta amigos</a>.</p>
             <form id="chessInviteForm" class="chess-invite-form"><label for="chessInviteFriend">Elige un amigo</label>
               <select id="chessInviteFriend" name="friend" required><option value="">Cargando amigos…</option></select>
               <button class="button" type="submit">Enviar invitación</button>
@@ -198,10 +195,10 @@
           </article>
           <article class="chess-panel" aria-labelledby="chess-games-title">
             <div class="chess-panel-heading"><h3 id="chess-games-title">Mis partidas</h3><button id="chessRefresh" class="button button-secondary" type="button">Actualizar</button></div>
-            <p class="muted">Las invitaciones y jugadas se sincronizan entre cuentas.</p><div id="chessGames" class="chess-games-list" aria-live="polite"></div>
+            <div id="chessGames" class="chess-games-list" aria-live="polite"></div>
           </article>
           <article class="chess-panel" aria-labelledby="chess-shop-title">
-            <div class="chess-panel-heading"><div><h3 id="chess-shop-title">Tienda de fondos</h3><p class="muted">Los fondos se compran una vez y quedan guardados en tu cuenta.</p></div></div>
+            <div class="chess-panel-heading"><div><h3 id="chess-shop-title">Tienda de fondos</h3></div></div>
             <div id="chessShop" class="chess-shop-list" aria-live="polite"></div>
           </article>
         </div>
@@ -216,9 +213,9 @@
       </div>
     </section>
 
-    <section class="card calendar-card" aria-labelledby="calendar-heading">
+    <section id="calendarSection" class="card calendar-card" aria-labelledby="calendar-heading">
   <div class="section-title-row">
-    <div><p class="eyebrow">CALENDARIO</p><h2 id="calendar-heading">Calendario de notas</h2><p class="muted">Cada nota queda asociada a una fecha durante esta sesión.</p></div>
+        <div><p class="eyebrow">CALENDARIO</p><h2 id="calendar-heading">Calendario de notas</h2><p class="muted">Revisa tus notas por fecha.</p></div>
     <input id="calendarMonth" type="month" aria-label="Mes del calendario">
   </div>
   <div class="calendar-toolbar">
@@ -229,9 +226,7 @@
   <div id="calendar" aria-live="polite"></div>
   <div id="calendarDetails" aria-live="polite"></div>
 </section>
-    <footer>
-      <p>StudyFlow · Tus materias y notas se guardan en tu cuenta cuando inicias sesión. Las solicitudes y el intercambio de promedios usarán permisos separados.</p>
-    </footer>
+    <footer><p>StudyFlow · Tus datos están disponibles en tu cuenta.</p></footer>
   </main>
   <script src="app.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" defer></script>

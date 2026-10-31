@@ -111,13 +111,25 @@ test("la configuración no contiene credenciales y la guía explica el setup", (
   assert.match(guide, /Redirect URLs/);
 });
 
-test("la pantalla de acceso muestra el ajedrez y explica cómo abrirlo después de iniciar sesión", () => {
+test("la pantalla de acceso destaca el ajedrez y ofrece un acceso claro a la app", () => {
   const source = fs.readFileSync(path.join(repoRoot, "auth.js"), "utf8");
   assert.match(source, /Ajedrez en tiempo real/);
-  assert.match(source, /Invita a tus amigos, gana 10 Papucoins/);
-  assert.match(source, /Entrar a StudyFlow · Amigos y Ajedrez/);
+  assert.match(source, /Juega con amigos, gana 10 Papucoins/);
+  assert.match(source, /Abrir StudyFlow/);
   assert.match(source, /auth-chess-link/);
   assert.match(source, /chessSection\.scrollIntoView/);
+});
+
+test("la vista de acceso carga antes que la app y el inicio evita mostrar ambas a la vez", () => {
+  const html = fs.readFileSync(path.join(repoRoot, "index.html"), "utf8");
+  const css = fs.readFileSync(path.join(repoRoot, "styles.css"), "utf8");
+  const source = fs.readFileSync(path.join(repoRoot, "auth.js"), "utf8");
+  assert.match(html, /<link id="studyflow-auth-css" rel="stylesheet" href="auth\.css">/);
+  assert.match(html, /<section id="studyflow-auth-root"[\s\S]*?<\/section>\s*<main class="shell" hidden>/);
+  assert.match(css, /\[hidden\]\s*\{\s*display:\s*none\s*!important;/);
+  assert.match(source, /function showAuth\(\)[\s\S]*?view\.hidden = false;\s*app\.hidden = true;/);
+  assert.match(source, /function showApp\(mode\)[\s\S]*?view\.hidden = true;\s*app\.hidden = false;/);
+  assert.match(source, /user\.id === accountAppOpenFor && !app\.hidden/);
 });
 
 
