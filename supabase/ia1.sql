@@ -297,3 +297,11 @@ insert into public.diagnostic_questions values('c32','chain',3,'Deriva f(x) = (1
 insert into public.diagnostic_solutions values('c32','d','3(1 + e^(2x))² · 2e^(2x) = 6e^(2x)(1 + e^(2x))².','["Deriva la potencia y después la exponencial.","El exponente 2x también debe derivarse."]','Revisa los factores 3 y 2.');
 insert into public.diagnostic_questions values('c33','chain',3,'Deriva f(x) = √(1 + x⁴).','[{"id":"a","text":"4x³/√(1 + x⁴)"},{"id":"b","text":"2x³√(1 + x⁴)"},{"id":"c","text":"2x³/√(1 + x⁴)"},{"id":"d","text":"1/(2√(1 + x⁴))"}]','basics');
 insert into public.diagnostic_solutions values('c33','c','Escribe (1 + x⁴)¹ᐟ². Deriva: ½(1 + x⁴)⁻¹ᐟ² · 4x³.','["Reescribe la raíz como potencia 1/2.","Multiplica por la derivada de 1 + x⁴."]','Revisa la potencia exterior y el factor 4x³.');
+
+-- Cover diagnostic foreign keys and make direct-read denial explicit.
+create index diagnostic_answers_question on public.diagnostic_answers(question_id);
+create index diagnostic_answers_session_owner on public.diagnostic_answers(session_id,user_id);
+create index diagnostic_sessions_question on public.diagnostic_sessions(current_question_id);
+create index topic_progress_session_owner on public.topic_progress(session_id,user_id);
+create policy diagnostic_questions_no_direct_read on public.diagnostic_questions for select to authenticated using (false);
+create policy diagnostic_solutions_no_direct_read on public.diagnostic_solutions for select to authenticated using (false);

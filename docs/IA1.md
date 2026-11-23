@@ -12,7 +12,7 @@ El informe distingue aciertos independientes, aciertos con pistas y errores. Men
 
 ## Base de datos
 
-`supabase/ia1.sql` es el script aditivo de instalación para un proyecto StudyFlow existente. Ejecutarlo una sola vez en el proyecto configurado. No elimina tablas ni datos existentes. El banco reproducible y sus expresiones para verificación numérica están en `supabase/seed/diagnostic-questions.json`.
+`supabase/ia1.sql` es el script aditivo de instalación para un proyecto StudyFlow existente. Las dos migraciones IA1 están aplicadas en producción y registradas en supabase/migrations con sus versiones reales. El script consolidado permite reproducir la instalación una sola vez en un proyecto que todavía no tenga el módulo. No elimina tablas ni datos existentes. El banco reproducible y sus expresiones para verificación numérica están en `supabase/seed/diagnostic-questions.json`.
 
 Tablas: `diagnostic_questions`, `diagnostic_solutions`, `diagnostic_sessions`, `diagnostic_answers`, `topic_progress`. Todas tienen RLS. El navegador solo puede leer sus sesiones, respuestas y progreso. No tiene acceso directo a soluciones, preguntas futuras ni escrituras de calificación.
 
@@ -26,7 +26,7 @@ GitHub Actions ejecuta sintaxis, los tests existentes, las 27 derivadas mediante
 
 Comando: `node --test tests/*.mjs` después de instalar chess.js@1.4.0 y jsdom@26.1.0. Para pruebas SQL, proporcionar `DIAGNOSTIC_TEST_DATABASE_URL` de una base de pruebas vacía; nunca usar producción. La prueba crea roles de prueba y un esquema auth mínimo.
 
-Antes de publicar, comprobar además la instalación real de Supabase y una sesión visual desde la página desplegada. Si Supabase no está disponible, la sección informa del problema y las funciones existentes de StudyFlow permanecen separadas.
+La instalación real de Supabase se verificó con una transacción revertida: inicio, recuperación, pistas, respuesta idempotente, avance, cierre, soluciones privadas y aislamiento entre identidades. Las 78 pruebas automatizadas pasaron en GitHub Actions. Verificar también la interfaz al publicar. Si Supabase no está disponible, la sección informa del problema y las funciones existentes de StudyFlow permanecen separadas.
 
 ## Próxima etapa
 
