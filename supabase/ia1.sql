@@ -132,20 +132,20 @@ end $$;
 
 create function studyflow_diagnostic.session_payload(p_session uuid)
 returns jsonb language plpgsql set search_path='' as $$
-declare s public.diagnostic_sessions; q public.diagnostic_questions; sol public.diagnostic_solutions;
- a public.diagnostic_answers; question jsonb; feedback jsonb; report jsonb;
+declare s public.diagnostic_sessions; question_row public.diagnostic_questions; sol public.diagnostic_solutions;
+ answer_row public.diagnostic_answers; question jsonb; feedback jsonb; report jsonb;
 begin
  select * into strict s from public.diagnostic_sessions where id=p_session;
- select * into q from public.diagnostic_questions where id=s.current_question_id;
- select * into sol from public.diagnostic_solutions where question_id=q.id;
- select * into a from public.diagnostic_answers where session_id=s.id and question_id=q.id;
- if q.id is not null and s.status='active' then
-   question:=jsonb_build_object('id',q.id,'topic',q.topic,'difficulty',q.difficulty,'prompt',q.prompt,'options',q.options,
+ select * into question_row from public.diagnostic_questions where id=s.current_question_id;
+ select * into sol from public.diagnostic_solutions where question_id=question_row.id;
+ select * into answer_row from public.diagnostic_answers where session_id=s.id and question_id=question_row.id;
+ if question_row.id is not null and s.status='active' then
+   question:=jsonb_build_object('id',question_row.id,'topic',question_row.topic,'difficulty',question_row.difficulty,'prompt',question_row.prompt,'options',question_row.options,
     'hints',(select coalesce(jsonb_agg(h.value order by h.ord),'[]'::jsonb) from jsonb_array_elements(sol.hints) with ordinality h(value,ord) where h.ord<=s.hint_count));
-   if a.id is not null then
-     feedback:=jsonb_build_object('correct',a.correct,'selected_option',a.selected_option,'explanation',a.explanation,
-     'hints_used',a.hints_used,'solution',sol.solution,'correct_option',sol.correct_option,
-     'message',case when a.correct then 'Respuesta correcta.' when a.selected_option='skip' then 'Repasa la solución y prueba otro ejercicio.' else sol.error_hint end);
+   if answer_row.id is not null then
+     feedback:=jsonb_build_object('correct',answer_row.correct,'selected_option',answer_row.selected_option,'explanation',answer_row.explanation,
+     'hints_used',answer_row.hints_used,'solution',sol.solution,'correct_option',sol.correct_option,
+     'message',case when answer_row.correct then 'Respuesta correcta.' when answer_row.selected_option='skip' then 'Repasa la solución y prueba otro ejercicio.' else sol.error_hint end);
    end if;
  end if;
  select coalesce(jsonb_agg(r order by r.topic),'[]'::jsonb) into report from (

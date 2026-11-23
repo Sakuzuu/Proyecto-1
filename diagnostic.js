@@ -45,6 +45,7 @@
     const section = doc.getElementById("diagnosticSection");
     if (!section || !userId) return { destroy() {} };
     const view = doc.getElementById("diagnosticView"), status = doc.getElementById("diagnosticStatus");
+    const retry = doc.getElementById("diagnosticRetry");
     const service = options.service || createService(client);
     const storage = options.storage || (typeof window !== "undefined" ? window.sessionStorage : null);
     let state = null, busy = false, destroyed = false, deadlineRequested = false;
@@ -58,7 +59,7 @@
       try { storage && storage.setItem(key(), JSON.stringify({ option: form.querySelector('input[name="answer"]:checked')?.value || "", explanation: form.querySelector("textarea")?.value || "" })); } catch (_) {}
     }
     function clearDraft() { try { if (key()) storage && storage.removeItem(key()); } catch (_) {} }
-    function message(text, error) { status.textContent = text; status.hidden = !text; status.className = "diagnostic-status" + (error ? " is-error" : ""); }
+    function message(text, error) { if (retry) retry.hidden = !error; status.textContent = text; status.hidden = !text; status.className = "diagnostic-status" + (error ? " is-error" : ""); }
     function controls(disabled) { view.querySelectorAll("button,input,select,textarea").forEach(el => { el.disabled = disabled; }); view.setAttribute("aria-busy", String(disabled)); }
     function focus() { const heading = view.querySelector("[data-diagnostic-focus]"); if (heading && typeof heading.focus === "function") heading.focus({ preventScroll: true }); }
     function historyHtml() {
@@ -157,6 +158,8 @@
       if (action === "finish") return void run("finish");
       if (action === "hint" || action === "next") return void run(action,{question_id:state.question.id});
     }
+    function retryLoad() { void run("load"); }
+    if (retry) retry.addEventListener("click",retryLoad);
     const interval = setInterval(tick,1000);
     view.addEventListener("submit",submit); view.addEventListener("click",click);
     view.addEventListener("input",saveDraft); view.addEventListener("change",saveDraft);
@@ -164,6 +167,7 @@
     const ready = run("load",{},null);
     return { ready, destroy() {
       destroyed=true; clearInterval(interval); clearDraft();
+      if (retry) retry.removeEventListener("click",retryLoad);
       view.removeEventListener("submit",submit); view.removeEventListener("click",click);
       view.removeEventListener("input",saveDraft); view.removeEventListener("change",saveDraft);
       view.innerHTML=""; section.hidden=true; message("");
