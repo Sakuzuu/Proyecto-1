@@ -1,0 +1,5 @@
+supabase/
+tests/
+docs/
+node_modules/
+.github/

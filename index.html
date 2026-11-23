@@ -6,6 +6,7 @@
   <meta name="description" content="StudyFlow: organiza materias y notas, calcula promedios y sincroniza tus datos académicos.">
   <title>StudyFlow · Rendimiento académico</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="diagnostic.css?v=IA1">
   <link id="studyflow-auth-css" rel="stylesheet" href="auth.css">
 </head>
 <body>
@@ -26,7 +27,7 @@
     </header>
     <nav class="section-nav" aria-label="Accesos rápidos">
       <a href="#workspace">Materias y notas</a><a href="#averagesSection">Promedios</a>
-      <a href="#friendsSection" data-account-nav hidden>Amigos</a><a href="#chessSection" data-account-nav hidden>Ajedrez</a><a href="#calendarSection">Calendario</a>
+      <a href="#diagnosticSection" data-account-nav hidden>Diagnóstico adaptativo</a><a href="#friendsSection" data-account-nav hidden>Amigos</a><a href="#chessSection" data-account-nav hidden>Ajedrez</a><a href="#calendarSection">Calendario</a>
     </nav>
     <p id="cloudSyncStatus" class="cloud-sync-status" hidden role="status"></p>
 
@@ -127,6 +128,15 @@
       </details>
     </section>
 
+
+    <section id="diagnosticSection" class="card diagnostic-section" aria-labelledby="diagnosticTitle" hidden>
+      <div class="section-title-row">
+        <div><p class="eyebrow">APRENDE CON EVIDENCIA</p><h2 id="diagnosticTitle">Diagnóstico adaptativo</h2><p class="muted">Un recorrido que cambia contigo.</p></div>
+        <span class="pill">Cálculo · Derivadas</span>
+      </div>
+      <p id="diagnosticStatus" class="diagnostic-status" role="status" hidden></p>
+      <div id="diagnosticView"></div>
+    </section>
 
     <section id="friendsSection" class="card friends-section" aria-labelledby="friends-title" hidden>
       <div class="section-title-row">
@@ -231,10 +241,11 @@
   <script src="app.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" defer></script>
   <script src="supabase-config.js" defer></script>
+  <script src="diagnostic.js?v=IA1" defer></script>
   <script src="academic-data.js" defer></script>
   <script src="friends.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js" defer></script>
   <script src="chess-ui.js" defer></script>
-  <script src="auth.js?v=20261031-t1-3" defer></script>
+  <script src="auth.js?v=IA1" defer></script>
 </body>
 </html>

@@ -151,6 +151,11 @@
     let recoveryMode = Boolean(win.location && isPasswordRecoveryUrl(win.location.href)), activeUserId = null, changeToken = 0;
     let currentView = "login";
 
+    function destroyDiagnosticUI() {
+      if (win.StudyFlowDiagnosticController && typeof win.StudyFlowDiagnosticController.destroy === "function") win.StudyFlowDiagnosticController.destroy();
+      win.StudyFlowDiagnosticController = null;
+    }
+
     function destroyFriendsUI() {
       if (win.StudyFlowFriendsController && typeof win.StudyFlowFriendsController.destroy === "function") {
         win.StudyFlowFriendsController.destroy();
@@ -254,6 +259,13 @@
           }
         }
       }
+      if (activeUserId !== profile.id) return;
+      if (win.StudyFlowDiagnostic) {
+        destroyDiagnosticUI();
+        win.StudyFlowDiagnosticController = win.StudyFlowDiagnostic.mount({
+          document: doc, client: client, userId: activeUserId
+        });
+      }
       doc.querySelectorAll("[data-account-nav]").forEach(link => { link.hidden = false; });
     }
     function showProfile(profile, user) {
@@ -289,6 +301,7 @@
       if (event === "PASSWORD_RECOVERY") { recoveryMode = true; renderAuth("Introduce tu nueva contraseña.", "success"); return; }
       if (recoveryMode && user) { renderAuth("Enlace verificado. Introduce tu nueva contraseña.", "success"); return; }
       if (!user) {
+        destroyDiagnosticUI();
         destroyChessUI();
         destroyFriendsUI();
         if (win.StudyFlowApp && typeof win.StudyFlowApp.disconnectCloud === "function") win.StudyFlowApp.disconnectCloud();
@@ -314,6 +327,7 @@
         if (msg) msg.textContent = friendlyError(result.error);
         return;
       }
+      destroyDiagnosticUI();
       destroyChessUI();
       destroyFriendsUI();
       if (win.StudyFlowApp && typeof win.StudyFlowApp.disconnectCloud === "function") win.StudyFlowApp.disconnectCloud();

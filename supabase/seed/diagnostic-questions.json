@@ -1,0 +1,1055 @@
+[
+  {
+    "id": "b11",
+    "topic": "basics",
+    "difficulty": 1,
+    "prompt": "Deriva f(x) = x⁴.",
+    "options": [
+      {
+        "id": "a",
+        "text": "4x³"
+      },
+      {
+        "id": "b",
+        "text": "x³"
+      },
+      {
+        "id": "c",
+        "text": "4x⁴"
+      },
+      {
+        "id": "d",
+        "text": "0"
+      }
+    ],
+    "correct_option": "a",
+    "source": "x**4",
+    "formulas": [
+      "4*x**3",
+      "x**3",
+      "4*x**4",
+      "0"
+    ],
+    "solution": "Aplica (xⁿ)' = nxⁿ⁻¹: baja el 4 y resta uno al exponente.",
+    "hints": [
+      "Identifica el exponente.",
+      "Multiplica por el exponente y réstale uno."
+    ],
+    "error": "Revisa el coeficiente y el exponente.",
+    "prerequisite": null
+  },
+  {
+    "id": "b12",
+    "topic": "basics",
+    "difficulty": 1,
+    "prompt": "Deriva f(x) = 5x³.",
+    "options": [
+      {
+        "id": "a",
+        "text": "5x²"
+      },
+      {
+        "id": "b",
+        "text": "15x³"
+      },
+      {
+        "id": "c",
+        "text": "3x²"
+      },
+      {
+        "id": "d",
+        "text": "15x²"
+      }
+    ],
+    "correct_option": "d",
+    "source": "5*x**3",
+    "formulas": [
+      "5*x**2",
+      "15*x**3",
+      "3*x**2",
+      "15*x**2"
+    ],
+    "solution": "Conserva el 5 y deriva x³: 5·3x² = 15x².",
+    "hints": [
+      "La constante 5 se conserva.",
+      "Deriva x³ y multiplica por 5."
+    ],
+    "error": "Revisa el factor constante.",
+    "prerequisite": null
+  },
+  {
+    "id": "b13",
+    "topic": "basics",
+    "difficulty": 1,
+    "prompt": "Deriva f(x) = 7.",
+    "options": [
+      {
+        "id": "a",
+        "text": "0"
+      },
+      {
+        "id": "b",
+        "text": "1"
+      },
+      {
+        "id": "c",
+        "text": "7"
+      },
+      {
+        "id": "d",
+        "text": "x"
+      }
+    ],
+    "correct_option": "a",
+    "source": "7",
+    "formulas": [
+      "0",
+      "1",
+      "7",
+      "x"
+    ],
+    "solution": "Una constante no cambia con x; su derivada es 0.",
+    "hints": [
+      "¿Cambia 7 cuando cambia x?",
+      "La pendiente de una función constante es cero."
+    ],
+    "error": "Repasa la derivada de una constante.",
+    "prerequisite": null
+  },
+  {
+    "id": "b21",
+    "topic": "basics",
+    "difficulty": 2,
+    "prompt": "Deriva f(x) = 3x⁴ − 2x² + 5.",
+    "options": [
+      {
+        "id": "a",
+        "text": "12x³ − 4x + 5"
+      },
+      {
+        "id": "b",
+        "text": "12x³ − 4x"
+      },
+      {
+        "id": "c",
+        "text": "12x⁴ − 4x²"
+      },
+      {
+        "id": "d",
+        "text": "3x³ − 2x"
+      }
+    ],
+    "correct_option": "b",
+    "source": "3*x**4-2*x**2+5",
+    "formulas": [
+      "12*x**3-4*x+5",
+      "12*x**3-4*x",
+      "12*x**4-4*x**2",
+      "3*x**3-2*x"
+    ],
+    "solution": "Deriva cada término: 12x³, −4x y 0. Resultado: 12x³ − 4x.",
+    "hints": [
+      "Deriva término a término.",
+      "La derivada del término constante es cero."
+    ],
+    "error": "Revisa las potencias y el término constante.",
+    "prerequisite": null
+  },
+  {
+    "id": "b22",
+    "topic": "basics",
+    "difficulty": 2,
+    "prompt": "Deriva f(x) = 2/x + √x, con x > 0.",
+    "options": [
+      {
+        "id": "a",
+        "text": "−2/x² + 1/(2√x)"
+      },
+      {
+        "id": "b",
+        "text": "2/x² + 1/(2√x)"
+      },
+      {
+        "id": "c",
+        "text": "−2/x + √x"
+      },
+      {
+        "id": "d",
+        "text": "−2/x² + 2√x"
+      }
+    ],
+    "correct_option": "a",
+    "source": "2/x+Math.sqrt(x)",
+    "formulas": [
+      "-2/x**2+1/(2*Math.sqrt(x))",
+      "2/x**2+1/(2*Math.sqrt(x))",
+      "-2/x+Math.sqrt(x)",
+      "-2/x**2+2*Math.sqrt(x)"
+    ],
+    "solution": "Escribe 2x⁻¹ + x¹ᐟ². Su derivada es −2x⁻² + ½x⁻¹ᐟ².",
+    "hints": [
+      "Reescribe usando exponentes.",
+      "Usa los exponentes −1 y 1/2."
+    ],
+    "error": "Revisa exponentes negativos y fraccionarios.",
+    "prerequisite": null
+  },
+  {
+    "id": "b23",
+    "topic": "basics",
+    "difficulty": 2,
+    "prompt": "Deriva f(x) = 4x⁵ − 3x + 8.",
+    "options": [
+      {
+        "id": "a",
+        "text": "20x⁴ − 3x"
+      },
+      {
+        "id": "b",
+        "text": "4x⁴ − 3"
+      },
+      {
+        "id": "c",
+        "text": "20x⁵ − 3"
+      },
+      {
+        "id": "d",
+        "text": "20x⁴ − 3"
+      }
+    ],
+    "correct_option": "d",
+    "source": "4*x**5-3*x+8",
+    "formulas": [
+      "20*x**4-3*x",
+      "4*x**4-3",
+      "20*x**5-3",
+      "20*x**4-3"
+    ],
+    "solution": "(4x⁵)' = 20x⁴, (−3x)' = −3 y 8' = 0.",
+    "hints": [
+      "Trata cada término por separado.",
+      "La derivada de ax es a."
+    ],
+    "error": "Revisa la derivada del término lineal.",
+    "prerequisite": null
+  },
+  {
+    "id": "b31",
+    "topic": "basics",
+    "difficulty": 3,
+    "prompt": "Deriva f(x) = 3/x² − 2√x, con x > 0.",
+    "options": [
+      {
+        "id": "a",
+        "text": "−6/x² − 1/√x"
+      },
+      {
+        "id": "b",
+        "text": "−6/x³ − 2/√x"
+      },
+      {
+        "id": "c",
+        "text": "−6/x³ − 1/√x"
+      },
+      {
+        "id": "d",
+        "text": "6/x³ − 1/√x"
+      }
+    ],
+    "correct_option": "c",
+    "source": "3/x**2-2*Math.sqrt(x)",
+    "formulas": [
+      "-6/x**2-1/Math.sqrt(x)",
+      "-6/x**3-2/Math.sqrt(x)",
+      "-6/x**3-1/Math.sqrt(x)",
+      "6/x**3-1/Math.sqrt(x)"
+    ],
+    "solution": "Deriva 3x⁻² − 2x¹ᐟ²: −6x⁻³ − x⁻¹ᐟ².",
+    "hints": [
+      "Convierte ambos términos a potencias.",
+      "Multiplica cada coeficiente por su exponente."
+    ],
+    "error": "Revisa signos y exponentes fraccionarios.",
+    "prerequisite": null
+  },
+  {
+    "id": "b32",
+    "topic": "basics",
+    "difficulty": 3,
+    "prompt": "Deriva f(x) = (x³ + 2x)/x, con x ≠ 0.",
+    "options": [
+      {
+        "id": "a",
+        "text": "x²"
+      },
+      {
+        "id": "b",
+        "text": "2x"
+      },
+      {
+        "id": "c",
+        "text": "3x² + 2"
+      },
+      {
+        "id": "d",
+        "text": "2x + 2"
+      }
+    ],
+    "correct_option": "b",
+    "source": "(x**3+2*x)/x",
+    "formulas": [
+      "x**2",
+      "2*x",
+      "3*x**2+2",
+      "2*x+2"
+    ],
+    "solution": "Simplifica primero: f(x) = x² + 2. Luego f'(x) = 2x.",
+    "hints": [
+      "Simplifica la división antes de derivar.",
+      "Divide cada término del numerador por x."
+    ],
+    "error": "Simplificar puede evitar una regla innecesaria.",
+    "prerequisite": null
+  },
+  {
+    "id": "b33",
+    "topic": "basics",
+    "difficulty": 3,
+    "prompt": "Deriva f(x) = x^(3/2) + x^(−2), con x > 0.",
+    "options": [
+      {
+        "id": "a",
+        "text": "(3/2)√x − 2/x³"
+      },
+      {
+        "id": "b",
+        "text": "(3/2)√x + 2/x³"
+      },
+      {
+        "id": "c",
+        "text": "(3/2)x − 2/x²"
+      },
+      {
+        "id": "d",
+        "text": "√x − 2/x³"
+      }
+    ],
+    "correct_option": "a",
+    "source": "x**1.5+x**(-2)",
+    "formulas": [
+      "1.5*Math.sqrt(x)-2/x**3",
+      "1.5*Math.sqrt(x)+2/x**3",
+      "1.5*x-2/x**2",
+      "Math.sqrt(x)-2/x**3"
+    ],
+    "solution": "Resta uno a cada exponente: 3/2 − 1 = 1/2 y −2 − 1 = −3.",
+    "hints": [
+      "Usa la regla de la potencia en ambos términos.",
+      "Un exponente negativo mantiene su signo al multiplicar."
+    ],
+    "error": "Revisa la resta de exponentes.",
+    "prerequisite": null
+  },
+  {
+    "id": "p11",
+    "topic": "product",
+    "difficulty": 1,
+    "prompt": "Deriva f(x) = x(x + 1).",
+    "options": [
+      {
+        "id": "a",
+        "text": "x + 1"
+      },
+      {
+        "id": "b",
+        "text": "2x"
+      },
+      {
+        "id": "c",
+        "text": "1"
+      },
+      {
+        "id": "d",
+        "text": "2x + 1"
+      }
+    ],
+    "correct_option": "d",
+    "source": "x*(x+1)",
+    "formulas": [
+      "x+1",
+      "2*x",
+      "1",
+      "2*x+1"
+    ],
+    "solution": "Usa u'v + uv': (x + 1) + x = 2x + 1.",
+    "hints": [
+      "Hay dos factores que dependen de x.",
+      "Suma la derivada del primero por el segundo y viceversa."
+    ],
+    "error": "No multipliques solamente las derivadas.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "p12",
+    "topic": "product",
+    "difficulty": 1,
+    "prompt": "Deriva f(x) = x²(x + 2).",
+    "options": [
+      {
+        "id": "a",
+        "text": "2x² + 4x"
+      },
+      {
+        "id": "b",
+        "text": "3x² + 2"
+      },
+      {
+        "id": "c",
+        "text": "3x² + 4x"
+      },
+      {
+        "id": "d",
+        "text": "2x"
+      }
+    ],
+    "correct_option": "c",
+    "source": "x**2*(x+2)",
+    "formulas": [
+      "2*x**2+4*x",
+      "3*x**2+2",
+      "3*x**2+4*x",
+      "2*x"
+    ],
+    "solution": "2x(x + 2) + x² = 3x² + 4x.",
+    "hints": [
+      "Identifica u = x² y v = x + 2.",
+      "Incluye los dos sumandos de la regla."
+    ],
+    "error": "Comprueba que incluiste los dos sumandos.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "p13",
+    "topic": "product",
+    "difficulty": 1,
+    "prompt": "Deriva f(x) = (x + 1)(x + 3).",
+    "options": [
+      {
+        "id": "a",
+        "text": "2x + 3"
+      },
+      {
+        "id": "b",
+        "text": "2x + 4"
+      },
+      {
+        "id": "c",
+        "text": "1"
+      },
+      {
+        "id": "d",
+        "text": "x + 4"
+      }
+    ],
+    "correct_option": "b",
+    "source": "(x+1)*(x+3)",
+    "formulas": [
+      "2*x+3",
+      "2*x+4",
+      "1",
+      "x+4"
+    ],
+    "solution": "(x + 3) + (x + 1) = 2x + 4.",
+    "hints": [
+      "Cada factor tiene derivada 1.",
+      "Suma los factores originales."
+    ],
+    "error": "La derivada de un producto no es el producto de derivadas.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "p21",
+    "topic": "product",
+    "difficulty": 2,
+    "prompt": "Deriva f(x) = (x² + 1)(x³ − 2).",
+    "options": [
+      {
+        "id": "a",
+        "text": "2x(x³ − 2) + 3x²(x² + 1)"
+      },
+      {
+        "id": "b",
+        "text": "6x³"
+      },
+      {
+        "id": "c",
+        "text": "2x(x³ − 2)"
+      },
+      {
+        "id": "d",
+        "text": "3x²(x² + 1)"
+      }
+    ],
+    "correct_option": "a",
+    "source": "(x**2+1)*(x**3-2)",
+    "formulas": [
+      "2*x*(x**3-2)+3*x**2*(x**2+1)",
+      "6*x**3",
+      "2*x*(x**3-2)",
+      "3*x**2*(x**2+1)"
+    ],
+    "solution": "u' = 2x y v' = 3x². Combina u'v + uv'.",
+    "hints": [
+      "Nombra los factores u y v.",
+      "Deriva cada factor y conserva el otro en cada sumando."
+    ],
+    "error": "Comprueba u'v + uv'.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "p22",
+    "topic": "product",
+    "difficulty": 2,
+    "prompt": "Deriva f(x) = x² sen(x).",
+    "options": [
+      {
+        "id": "a",
+        "text": "2x cos(x)"
+      },
+      {
+        "id": "b",
+        "text": "x² cos(x)"
+      },
+      {
+        "id": "c",
+        "text": "2x sen(x) − x² cos(x)"
+      },
+      {
+        "id": "d",
+        "text": "2x sen(x) + x² cos(x)"
+      }
+    ],
+    "correct_option": "d",
+    "source": "x**2*Math.sin(x)",
+    "formulas": [
+      "2*x*Math.cos(x)",
+      "x**2*Math.cos(x)",
+      "2*x*Math.sin(x)-x**2*Math.cos(x)",
+      "2*x*Math.sin(x)+x**2*Math.cos(x)"
+    ],
+    "solution": "Deriva x² y sen(x) por separado: 2x sen(x) + x² cos(x).",
+    "hints": [
+      "La derivada de sen(x) es cos(x).",
+      "Conserva el factor que no estás derivando."
+    ],
+    "error": "Revisa la regla del producto y la derivada de seno.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "p23",
+    "topic": "product",
+    "difficulty": 2,
+    "prompt": "Deriva f(x) = x eˣ.",
+    "options": [
+      {
+        "id": "a",
+        "text": "x eˣ"
+      },
+      {
+        "id": "b",
+        "text": "2x eˣ"
+      },
+      {
+        "id": "c",
+        "text": "eˣ(1 + x)"
+      },
+      {
+        "id": "d",
+        "text": "eˣ"
+      }
+    ],
+    "correct_option": "c",
+    "source": "x*Math.exp(x)",
+    "formulas": [
+      "x*Math.exp(x)",
+      "2*x*Math.exp(x)",
+      "Math.exp(x)*(1+x)",
+      "Math.exp(x)"
+    ],
+    "solution": "1·eˣ + x·eˣ = eˣ(1 + x).",
+    "hints": [
+      "La derivada de eˣ es eˣ.",
+      "Debes obtener dos sumandos."
+    ],
+    "error": "Revisa el sumando que aporta la derivada de x.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "p31",
+    "topic": "product",
+    "difficulty": 3,
+    "prompt": "Deriva f(x) = (x² + 1)²(x − 1).",
+    "options": [
+      {
+        "id": "a",
+        "text": "4x(x² + 1)(x − 1)"
+      },
+      {
+        "id": "b",
+        "text": "4x(x² + 1)(x − 1) + (x² + 1)²"
+      },
+      {
+        "id": "c",
+        "text": "2(x² + 1)(x − 1) + (x² + 1)²"
+      },
+      {
+        "id": "d",
+        "text": "4x(x² + 1)"
+      }
+    ],
+    "correct_option": "b",
+    "source": "(x**2+1)**2*(x-1)",
+    "formulas": [
+      "4*x*(x**2+1)*(x-1)",
+      "4*x*(x**2+1)*(x-1)+(x**2+1)**2",
+      "2*(x**2+1)*(x-1)+(x**2+1)**2",
+      "4*x*(x**2+1)"
+    ],
+    "solution": "Combina producto y cadena: u' = 4x(x² + 1), v' = 1.",
+    "hints": [
+      "El primer factor necesita la regla de la cadena.",
+      "Después aplica u'v + uv'."
+    ],
+    "error": "Revisa la cadena dentro de la regla del producto.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "p32",
+    "topic": "product",
+    "difficulty": 3,
+    "prompt": "Deriva f(x) = x² e^(2x).",
+    "options": [
+      {
+        "id": "a",
+        "text": "e^(2x)(2x + 2x²)"
+      },
+      {
+        "id": "b",
+        "text": "e^(2x)(2x + x²)"
+      },
+      {
+        "id": "c",
+        "text": "4x e^(2x)"
+      },
+      {
+        "id": "d",
+        "text": "2x² e^(2x)"
+      }
+    ],
+    "correct_option": "a",
+    "source": "x**2*Math.exp(2*x)",
+    "formulas": [
+      "Math.exp(2*x)*(2*x+2*x**2)",
+      "Math.exp(2*x)*(2*x+x**2)",
+      "4*x*Math.exp(2*x)",
+      "2*x**2*Math.exp(2*x)"
+    ],
+    "solution": "La derivada de e^(2x) es 2e^(2x). Aplica producto y factoriza.",
+    "hints": [
+      "La derivada interna de 2x es 2.",
+      "Suma 2x e^(2x) y 2x² e^(2x)."
+    ],
+    "error": "Revisa el factor interno de la exponencial.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "p33",
+    "topic": "product",
+    "difficulty": 3,
+    "prompt": "Deriva f(x) = (x + 1) sen(3x).",
+    "options": [
+      {
+        "id": "a",
+        "text": "sen(3x) + (x + 1) cos(3x)"
+      },
+      {
+        "id": "b",
+        "text": "3 cos(3x)"
+      },
+      {
+        "id": "c",
+        "text": "3(x + 1) cos(3x)"
+      },
+      {
+        "id": "d",
+        "text": "sen(3x) + 3(x + 1) cos(3x)"
+      }
+    ],
+    "correct_option": "d",
+    "source": "(x+1)*Math.sin(3*x)",
+    "formulas": [
+      "Math.sin(3*x)+(x+1)*Math.cos(3*x)",
+      "3*Math.cos(3*x)",
+      "3*(x+1)*Math.cos(3*x)",
+      "Math.sin(3*x)+3*(x+1)*Math.cos(3*x)"
+    ],
+    "solution": "(x + 1)' = 1 y (sen(3x))' = 3cos(3x). Aplica producto.",
+    "hints": [
+      "Combina producto y cadena.",
+      "La derivada de sen(3x) incluye el factor 3."
+    ],
+    "error": "Revisa ambos sumandos y el factor 3.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "c11",
+    "topic": "chain",
+    "difficulty": 1,
+    "prompt": "Deriva f(x) = (2x + 1)².",
+    "options": [
+      {
+        "id": "a",
+        "text": "(2x + 1)²"
+      },
+      {
+        "id": "b",
+        "text": "4"
+      },
+      {
+        "id": "c",
+        "text": "4(2x + 1)"
+      },
+      {
+        "id": "d",
+        "text": "2(2x + 1)"
+      }
+    ],
+    "correct_option": "c",
+    "source": "(2*x+1)**2",
+    "formulas": [
+      "(2*x+1)**2",
+      "4",
+      "4*(2*x+1)",
+      "2*(2*x+1)"
+    ],
+    "solution": "La derivada exterior es 2(2x + 1). Multiplícala por la interna, 2.",
+    "hints": [
+      "Hay una función dentro de una potencia.",
+      "No olvides derivar 2x + 1."
+    ],
+    "error": "Revisa la derivada interna.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "c12",
+    "topic": "chain",
+    "difficulty": 1,
+    "prompt": "Deriva f(x) = (x + 3)³.",
+    "options": [
+      {
+        "id": "a",
+        "text": "3(x + 3)³"
+      },
+      {
+        "id": "b",
+        "text": "3(x + 3)²"
+      },
+      {
+        "id": "c",
+        "text": "(x + 3)²"
+      },
+      {
+        "id": "d",
+        "text": "3x²"
+      }
+    ],
+    "correct_option": "b",
+    "source": "(x+3)**3",
+    "formulas": [
+      "3*(x+3)**3",
+      "3*(x+3)**2",
+      "(x+3)**2",
+      "3*x**2"
+    ],
+    "solution": "Deriva la potencia y multiplica por (x + 3)' = 1.",
+    "hints": [
+      "Conserva toda la expresión interna.",
+      "Resta uno al exponente exterior."
+    ],
+    "error": "Conserva la expresión interna completa.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "c13",
+    "topic": "chain",
+    "difficulty": 1,
+    "prompt": "Deriva f(x) = sen(2x).",
+    "options": [
+      {
+        "id": "a",
+        "text": "2 cos(2x)"
+      },
+      {
+        "id": "b",
+        "text": "cos(2x)"
+      },
+      {
+        "id": "c",
+        "text": "−2 cos(2x)"
+      },
+      {
+        "id": "d",
+        "text": "2 sen(2x)"
+      }
+    ],
+    "correct_option": "a",
+    "source": "Math.sin(2*x)",
+    "formulas": [
+      "2*Math.cos(2*x)",
+      "Math.cos(2*x)",
+      "-2*Math.cos(2*x)",
+      "2*Math.sin(2*x)"
+    ],
+    "solution": "Deriva seno a coseno y multiplica por (2x)' = 2.",
+    "hints": [
+      "La función exterior es seno.",
+      "Multiplica por la derivada de 2x."
+    ],
+    "error": "Revisa el factor interno y la derivada trigonométrica.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "c21",
+    "topic": "chain",
+    "difficulty": 2,
+    "prompt": "Deriva f(x) = (3x² + 1)⁴.",
+    "options": [
+      {
+        "id": "a",
+        "text": "4(3x² + 1)³"
+      },
+      {
+        "id": "b",
+        "text": "24x(3x² + 1)⁴"
+      },
+      {
+        "id": "c",
+        "text": "12x(3x² + 1)³"
+      },
+      {
+        "id": "d",
+        "text": "24x(3x² + 1)³"
+      }
+    ],
+    "correct_option": "d",
+    "source": "(3*x**2+1)**4",
+    "formulas": [
+      "4*(3*x**2+1)**3",
+      "24*x*(3*x**2+1)**4",
+      "12*x*(3*x**2+1)**3",
+      "24*x*(3*x**2+1)**3"
+    ],
+    "solution": "4(3x² + 1)³ · 6x = 24x(3x² + 1)³.",
+    "hints": [
+      "Primero deriva la potencia exterior.",
+      "La derivada de 3x² + 1 es 6x."
+    ],
+    "error": "Puede faltar el factor 6x o el ajuste del exponente.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "c22",
+    "topic": "chain",
+    "difficulty": 2,
+    "prompt": "Deriva f(x) = cos(x²).",
+    "options": [
+      {
+        "id": "a",
+        "text": "2x sen(x²)"
+      },
+      {
+        "id": "b",
+        "text": "−2x cos(x²)"
+      },
+      {
+        "id": "c",
+        "text": "−2x sen(x²)"
+      },
+      {
+        "id": "d",
+        "text": "−sen(x²)"
+      }
+    ],
+    "correct_option": "c",
+    "source": "Math.cos(x**2)",
+    "formulas": [
+      "2*x*Math.sin(x**2)",
+      "-2*x*Math.cos(x**2)",
+      "-2*x*Math.sin(x**2)",
+      "-Math.sin(x**2)"
+    ],
+    "solution": "La derivada exterior es −sen(x²); la interna es 2x.",
+    "hints": [
+      "La derivada de coseno lleva signo negativo.",
+      "Deriva también x²."
+    ],
+    "error": "Revisa el signo del coseno y el factor 2x.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "c23",
+    "topic": "chain",
+    "difficulty": 2,
+    "prompt": "Deriva f(x) = e^(x² + 2x).",
+    "options": [
+      {
+        "id": "a",
+        "text": "(2x + 2)eˣ"
+      },
+      {
+        "id": "b",
+        "text": "(2x + 2)e^(x² + 2x)"
+      },
+      {
+        "id": "c",
+        "text": "e^(x² + 2x)"
+      },
+      {
+        "id": "d",
+        "text": "2x e^(x² + 2x)"
+      }
+    ],
+    "correct_option": "b",
+    "source": "Math.exp(x**2+2*x)",
+    "formulas": [
+      "(2*x+2)*Math.exp(x)",
+      "(2*x+2)*Math.exp(x**2+2*x)",
+      "Math.exp(x**2+2*x)",
+      "2*x*Math.exp(x**2+2*x)"
+    ],
+    "solution": "Conserva la exponencial y multiplícala por (x² + 2x)' = 2x + 2.",
+    "hints": [
+      "e^u se deriva como e^u · u'.",
+      "Deriva todos los términos del exponente."
+    ],
+    "error": "Revisa la derivada completa del exponente.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "c31",
+    "topic": "chain",
+    "difficulty": 3,
+    "prompt": "Deriva f(x) = sen((x² + 1)³).",
+    "options": [
+      {
+        "id": "a",
+        "text": "6x(x² + 1)² cos((x² + 1)³)"
+      },
+      {
+        "id": "b",
+        "text": "3(x² + 1)² cos((x² + 1)³)"
+      },
+      {
+        "id": "c",
+        "text": "6x cos((x² + 1)³)"
+      },
+      {
+        "id": "d",
+        "text": "6x(x² + 1)² sen((x² + 1)³)"
+      }
+    ],
+    "correct_option": "a",
+    "source": "Math.sin((x**2+1)**3)",
+    "formulas": [
+      "6*x*(x**2+1)**2*Math.cos((x**2+1)**3)",
+      "3*(x**2+1)**2*Math.cos((x**2+1)**3)",
+      "6*x*Math.cos((x**2+1)**3)",
+      "6*x*(x**2+1)**2*Math.sin((x**2+1)**3)"
+    ],
+    "solution": "Deriva de fuera hacia dentro: cos((x² + 1)³) · 3(x² + 1)² · 2x.",
+    "hints": [
+      "Identifica tres capas: seno, cubo y x² + 1.",
+      "Multiplica las derivadas de las tres capas."
+    ],
+    "error": "Revisa cada capa de la composición.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "c32",
+    "topic": "chain",
+    "difficulty": 3,
+    "prompt": "Deriva f(x) = (1 + e^(2x))³.",
+    "options": [
+      {
+        "id": "a",
+        "text": "3(1 + e^(2x))²"
+      },
+      {
+        "id": "b",
+        "text": "3e^(2x)(1 + e^(2x))²"
+      },
+      {
+        "id": "c",
+        "text": "6e^(2x)(1 + e^(2x))³"
+      },
+      {
+        "id": "d",
+        "text": "6e^(2x)(1 + e^(2x))²"
+      }
+    ],
+    "correct_option": "d",
+    "source": "(1+Math.exp(2*x))**3",
+    "formulas": [
+      "3*(1+Math.exp(2*x))**2",
+      "3*Math.exp(2*x)*(1+Math.exp(2*x))**2",
+      "6*Math.exp(2*x)*(1+Math.exp(2*x))**3",
+      "6*Math.exp(2*x)*(1+Math.exp(2*x))**2"
+    ],
+    "solution": "3(1 + e^(2x))² · 2e^(2x) = 6e^(2x)(1 + e^(2x))².",
+    "hints": [
+      "Deriva la potencia y después la exponencial.",
+      "El exponente 2x también debe derivarse."
+    ],
+    "error": "Revisa los factores 3 y 2.",
+    "prerequisite": "basics"
+  },
+  {
+    "id": "c33",
+    "topic": "chain",
+    "difficulty": 3,
+    "prompt": "Deriva f(x) = √(1 + x⁴).",
+    "options": [
+      {
+        "id": "a",
+        "text": "4x³/√(1 + x⁴)"
+      },
+      {
+        "id": "b",
+        "text": "2x³√(1 + x⁴)"
+      },
+      {
+        "id": "c",
+        "text": "2x³/√(1 + x⁴)"
+      },
+      {
+        "id": "d",
+        "text": "1/(2√(1 + x⁴))"
+      }
+    ],
+    "correct_option": "c",
+    "source": "Math.sqrt(1+x**4)",
+    "formulas": [
+      "4*x**3/Math.sqrt(1+x**4)",
+      "2*x**3*Math.sqrt(1+x**4)",
+      "2*x**3/Math.sqrt(1+x**4)",
+      "1/(2*Math.sqrt(1+x**4))"
+    ],
+    "solution": "Escribe (1 + x⁴)¹ᐟ². Deriva: ½(1 + x⁴)⁻¹ᐟ² · 4x³.",
+    "hints": [
+      "Reescribe la raíz como potencia 1/2.",
+      "Multiplica por la derivada de 1 + x⁴."
+    ],
+    "error": "Revisa la potencia exterior y el factor 4x³.",
+    "prerequisite": "basics"
+  }
+]

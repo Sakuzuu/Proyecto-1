@@ -3,12 +3,28 @@ on:
   push:
     branches:
       - main
+      - IA1
       - feature/cloud-academic-data
   pull_request:
   workflow_dispatch:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: studyflow_ci
+          POSTGRES_DB: studyflow_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DIAGNOSTIC_TEST_DATABASE_URL: postgresql://postgres:studyflow_ci@localhost:5432/studyflow_test
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,7 +40,8 @@ jobs:
           node --check friends.js
           node --check chess-ui.js
           node --check supabase-config.js
+          node --check diagnostic.js
       - name: Install chess rules engine for tests
-        run: npm install --no-save --no-package-lock chess.js@1.4.0
+        run: npm install --no-save --no-package-lock chess.js@1.4.0 jsdom@26.1.0
       - name: Run automated tests
         run: node --test tests/*.mjs

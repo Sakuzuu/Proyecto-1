@@ -125,7 +125,7 @@ test("la vista de acceso carga antes que la app y el inicio evita mostrar ambas 
   const css = fs.readFileSync(path.join(repoRoot, "styles.css"), "utf8");
   const source = fs.readFileSync(path.join(repoRoot, "auth.js"), "utf8");
   assert.match(html, /<link id="studyflow-auth-css" rel="stylesheet" href="auth\.css">/);
-  assert.match(html, /<script src="auth\.js\?v=20261031-t1-3" defer><\/script>/);
+  assert.match(html, /<script src="auth\.js\?v=IA1" defer><\/script>/);
   assert.match(html, /<section id="studyflow-auth-root"[\s\S]*?<\/section>\s*<main class="shell" hidden>/);
   assert.match(css, /\[hidden\]\s*\{\s*display:\s*none\s*!important;/);
   assert.match(source, /function showAuth\(\)[\s\S]*?view\.hidden = false;\s*app\.hidden = true;/);
